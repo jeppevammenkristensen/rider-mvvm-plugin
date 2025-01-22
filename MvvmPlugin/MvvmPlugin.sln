@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReSharperPlugin.MvvmPlugin", "MvvmPlugin\src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.csproj", "{59660EE6-5DBE-4E33-9E07-714703423B7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReSharperPlugin.MvvmPlugin.Rider", "MvvmPlugin\src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.Rider.csproj", "{AF302715-2816-4AE7-A4A0-D7E3A9F49DA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReSharperPlugin.MvvmPlugin.Tests", "MvvmPlugin\src\dotnet\ReSharperPlugin.MvvmPlugin.Tests\ReSharperPlugin.MvvmPlugin.Tests.csproj", "{A320B4F8-ECC3-43E0-A97B-CA28FE4DD28C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59660EE6-5DBE-4E33-9E07-714703423B7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59660EE6-5DBE-4E33-9E07-714703423B7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59660EE6-5DBE-4E33-9E07-714703423B7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59660EE6-5DBE-4E33-9E07-714703423B7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF302715-2816-4AE7-A4A0-D7E3A9F49DA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF302715-2816-4AE7-A4A0-D7E3A9F49DA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF302715-2816-4AE7-A4A0-D7E3A9F49DA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF302715-2816-4AE7-A4A0-D7E3A9F49DA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A320B4F8-ECC3-43E0-A97B-CA28FE4DD28C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A320B4F8-ECC3-43E0-A97B-CA28FE4DD28C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A320B4F8-ECC3-43E0-A97B-CA28FE4DD28C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A320B4F8-ECC3-43E0-A97B-CA28FE4DD28C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
