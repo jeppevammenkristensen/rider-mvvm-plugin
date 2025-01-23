@@ -6,6 +6,7 @@
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <IsPackable>false</IsPackable>
         <DefineConstants>$(DefineConstants);RIDER</DefineConstants>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

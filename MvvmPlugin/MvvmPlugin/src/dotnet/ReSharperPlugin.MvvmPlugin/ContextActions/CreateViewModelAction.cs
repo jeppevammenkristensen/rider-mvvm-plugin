@@ -137,10 +137,11 @@ public class CreateViewModelAction : ContextActionBase
                     if (csharpFile == null)
                         return null;
 
-                    var classLikeDeclarationFinder = csharpFile.Descendants<IClassLikeDeclaration>().Collect().FirstOrDefault();
+                    var firstClassLikeMatch = csharpFile.Descendants<IClassLikeDeclaration>().Collect().FirstOrDefault();
 
+                    string? namespaceName = null;
 
-                    if (classLikeDeclarationFinder == null)
+                    if (firstClassLikeMatch == null)
                     {
 
                         var elementFactory = CSharpElementFactory.GetInstance(csharpFile);
@@ -155,28 +156,33 @@ public class CreateViewModelAction : ContextActionBase
 
                         var namespaceDeclaration = elementFactory.CreateNamespaceDeclaration(nspath, isFileScoped);
                         var addedNs = csharpFile.AddNamespaceDeclarationAfter(namespaceDeclaration, null);
+                        namespaceName = namespaceDeclaration.DeclaredName;
 
                         // Generate the empty class
-                        classLikeDeclarationFinder =
+                        firstClassLikeMatch =
                             (IClassLikeDeclaration) elementFactory.CreateTypeMemberDeclaration("public class $0 {}",
                                 viewName);
                         var addedTypeDeclaration =
-                            addedNs.AddTypeDeclarationAfter(classLikeDeclarationFinder, null) as IClassDeclaration;
+                            addedNs.AddTypeDeclarationAfter(firstClassLikeMatch, null) as IClassDeclaration;
 
                         caretPosition = addedTypeDeclaration?.Body?.GetDocumentRange().TextRange.StartOffset + 1;
                     }
                     else
                     {
-                        caretPosition = classLikeDeclarationFinder.Body?.GetDocumentRange().TextRange.StartOffset + 1;
+                        namespaceName = firstClassLikeMatch.GetContainingNamespaceDeclaration()?.DeclaredName ?? throw new InvalidOperationException("Can't locate namespace for existing item");
+                        caretPosition = firstClassLikeMatch.Body?.GetDocumentRange().TextRange.StartOffset + 1;
                     }
 
-                    GenerateXamlViewModelAttributes(xamlFile, classLikeDeclarationFinder!.GetContainingNamespaceDeclaration().DeclaredName, viewName);
+                    GenerateXamlViewModelAttributes(xamlFile, namespaceName, viewName);
                 }
                 // Commit the changes
                 cookie.Commit(NullProgressIndicator.Create());
                 
-                // Go to the newly created file
+                // Go to the newly created file. But only in Rider as this will fail in visual studio
+#if RIDER
                 ShowProjectFile(solution, newFile.ToProjectFile().NotNull(),caretPosition).GetAwaiter().GetResult();
+#endif
+                
             }
             
            

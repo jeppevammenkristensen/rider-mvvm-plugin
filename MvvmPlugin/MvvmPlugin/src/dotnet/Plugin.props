@@ -5,12 +5,12 @@
     <!-- Keep in sync with ProductVersion in gradle.properties -->
     <SdkVersion>2024.3.3</SdkVersion>
 
-    <Title>MvvmPlugin</Title>
-    <Description>Description</Description>
+    <Title>Mvvm Plugin</Title>
+    <Description>A plugin to help with various Mvvm related operations</Description>
 
-    <Authors>Author</Authors>
+    <Authors>Jeppe Roi Kristensen</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of MvvmPlugin</Copyright>
-    <PackageTags>resharper plugin</PackageTags>
+    <PackageTags>resharper plugin rider</PackageTags>
 
     <PackageProjectUrl></PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
