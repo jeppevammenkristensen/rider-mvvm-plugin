@@ -14,6 +14,7 @@ using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Properties;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Intentions.Impl.LanguageSpecific.Finders;
 using JetBrains.ReSharper.Feature.Services.Util;
 using JetBrains.ReSharper.Feature.Services.Xaml.Bulbs;
 using JetBrains.ReSharper.Intentions.Xaml.ContextActions;
@@ -24,8 +25,10 @@ using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.CSharp.Util;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
 using JetBrains.ReSharper.Psi.Files;
+using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Transactions;
 using JetBrains.ReSharper.Psi.Tree;
+using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Psi.Xaml.Impl;
 using JetBrains.ReSharper.Psi.Xaml.Impl.Tree;
 using JetBrains.ReSharper.Psi.Xaml.Tree;
@@ -54,11 +57,11 @@ public class CreateViewModelAction : ContextActionBase
         _provider = provider;
     }
     
-    protected override Action<ITextControl> ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
-        // currently only Avalonia is supported
-        if (Kind != DesktopKind.Avalonia)
-            return null; 
+        // // currently only Avalonia is supported
+        // if (Kind != DesktopKind.Avalonia)
+        //     return null; 
         
         // Get the selected XAML file
         var xamlFile = _provider.GetSelectedTreeNode<IXamlFile>();
@@ -72,12 +75,6 @@ public class CreateViewModelAction : ContextActionBase
         var viewName = $"{_matchViewRegex.Replace(name, string.Empty)}ViewModel";
 
         var project = xamlFile.GetProject();
-
-        // Check or create a 'ViewModels' subdirectory
-        //var viewModelsFolder = project.Location.Combine("ViewModels");
-
-        // // Define the ViewModel file path
-        // var viewModelFilePath = viewModelsFolder.Combine($"{viewName}.cs");
 
         using (ReadLockCookie.Create())
         {
@@ -108,15 +105,29 @@ public class CreateViewModelAction : ContextActionBase
                 }
 
                 var filePath = projectFolder.NotNull().Location.Combine($"{viewName}.cs");
-                
-                if (filePath.ExistsFile)
+                bool fileExist = filePath.ExistsFile;
+
+                IPsiSourceFile? newFile;
+                if (fileExist)
                 {
-                    // Currently we exit. But we should look into updating the xaml
-                    return null;
+                    //var symbolsService = xamlFile.GetPsiServices().Symbols;
+                    
+                    // Load the existing file as a CSharp source file
+                    var matchedFile = projectFolder.GetSubFiles()
+                        .FirstOrDefault(sf => sf.Name.Equals($"{viewName}.cs", StringComparison.OrdinalIgnoreCase));
+                    
+                    if (matchedFile == null)
+                        throw new InvalidOperationException("Failed to retrieve the existing C# file.");
+
+                    newFile = matchedFile.ToSourceFile();
+                }
+                else
+                {
+                    // Create the new csharp file
+                    newFile = AddNewItemHelper.AddFile(projectFolder, $"{viewName}.cs").ToSourceFile();
                 }
                 
-                // Create the new csharp file
-                var newFile = AddNewItemHelper.AddFile(projectFolder, $"{viewName}.cs").ToSourceFile();
+               
                 
                 int? caretPosition;
                 using (PsiTransactionCookie.CreateAutoCommitCookieWithCachesUpdate(newFile.GetPsiServices(),
@@ -126,56 +137,40 @@ public class CreateViewModelAction : ContextActionBase
                     if (csharpFile == null)
                         return null;
 
-                    var elementFactory = CSharpElementFactory.GetInstance(csharpFile);
-                    
-                    // Check how to add the namespace
-                    bool isFileScoped = CSharpNamespaceUtil.CanAddFileScopedNamespaceDeclaration(csharpFile);
-                    
-                    // Find the namespace to use for the generated file
-                    var projectFile = newFile.ToProjectFile();
-                    var nspath = projectFile.GetParentFoldersPresentable().Reverse().Select(x => x.Name).AggregateString(".");
-                    
-                    var namespaceDeclaration = elementFactory.CreateNamespaceDeclaration(nspath,isFileScoped);
-                    var addedNs = csharpFile.AddNamespaceDeclarationAfter(namespaceDeclaration, null);
+                    var classLikeDeclarationFinder = csharpFile.Descendants<IClassLikeDeclaration>().Collect().FirstOrDefault();
 
-                    // Generate the empty class
-                    var classLikeDeclaration =
-                        (IClassLikeDeclaration) elementFactory.CreateTypeMemberDeclaration("public class $0 {}",
-                            viewName);
-                    var addedTypeDeclaration =
-                        addedNs.AddTypeDeclarationAfter(classLikeDeclaration, null) as IClassDeclaration;
 
-                    // Get the caret position inside the body of the class
-                    caretPosition = addedTypeDeclaration?.Body?.GetDocumentRange().TextRange.StartOffset + 1;
-
-                    if (Kind == DesktopKind.Avalonia)
+                    if (classLikeDeclarationFinder == null)
                     {
-                        // Set the DataType to point to the newly created viewModel
-                        
-                        var xamlFactory = XamlElementFactory.GetInstance(xamlFile, true);
-                        // Get the type declaration (will be for instance the root <Window> or <UserControl>
-                        var xamlTypeDeclaration = xamlFile.GetTypeDeclarations().First();
 
-                        // Create a namespace ViewModel that point to the namespace
-                        // Note: Things will die if viewModel is already present. Should be refined later on
-                        var namespaceAlias = xamlFactory.CreateNamespaceAlias("viewModel", $"clr-namespace:{nspath}");
-                    
-                        // Add the newly created alias after the last namespacealias attribute
-                        xamlTypeDeclaration.AddAttributeAfter(namespaceAlias,
-                            xamlTypeDeclaration.GetAttributes()
-                                .OfType<NamespaceAliasAttribute>()
-                                .LastOrDefault());
-                        
-                        // Create the DataType attribute and add it
-                        var dataTypeAttribute = xamlFactory.CreateRootAttribute($"x:DataType=\"viewModel:{viewName}\"");
-                        xamlTypeDeclaration.AddAttributeAfter(dataTypeAttribute, xamlTypeDeclaration.GetAttributes()
-                            .OfType<NamespaceAliasAttribute>()
-                            .LastOrDefault() );
+                        var elementFactory = CSharpElementFactory.GetInstance(csharpFile);
 
-                        // Try to format it (not working as I would want right now)
-                        var codeFormatter = ModificationUtil.GetCodeFormatter(xamlFile.Language.LanguageService());
-                        codeFormatter.Format(xamlFile, CodeFormatProfile.SOFT);
+                        // Check how to add the namespace
+                        bool isFileScoped = CSharpNamespaceUtil.CanAddFileScopedNamespaceDeclaration(csharpFile);
+
+                        // Find the namespace to use for the generated file
+                        var projectFile = newFile.ToProjectFile();
+                        var nspath = projectFile.GetParentFoldersPresentable().Reverse().Select(x => x.Name)
+                            .AggregateString(".");
+
+                        var namespaceDeclaration = elementFactory.CreateNamespaceDeclaration(nspath, isFileScoped);
+                        var addedNs = csharpFile.AddNamespaceDeclarationAfter(namespaceDeclaration, null);
+
+                        // Generate the empty class
+                        classLikeDeclarationFinder =
+                            (IClassLikeDeclaration) elementFactory.CreateTypeMemberDeclaration("public class $0 {}",
+                                viewName);
+                        var addedTypeDeclaration =
+                            addedNs.AddTypeDeclarationAfter(classLikeDeclarationFinder, null) as IClassDeclaration;
+
+                        caretPosition = addedTypeDeclaration?.Body?.GetDocumentRange().TextRange.StartOffset + 1;
                     }
+                    else
+                    {
+                        caretPosition = classLikeDeclarationFinder.Body?.GetDocumentRange().TextRange.StartOffset + 1;
+                    }
+
+                    GenerateXamlViewModelAttributes(xamlFile, classLikeDeclarationFinder!.GetContainingNamespaceDeclaration().DeclaredName, viewName);
                 }
                 // Commit the changes
                 cookie.Commit(NullProgressIndicator.Create());
@@ -192,24 +187,95 @@ public class CreateViewModelAction : ContextActionBase
         return null;
     }
 
+    private void GenerateXamlViewModelAttributes(IXamlFile xamlFile, string nspath, string viewName)
+    {
+        var xamlFactory = XamlElementFactory.GetInstance(xamlFile, true);
+        // Get the type declaration (will be for instance the root <Window> or <UserControl>
+        var xamlTypeDeclaration = xamlFile.GetTypeDeclarations().First();
+
+        INamespaceAlias? namespaceAlias = null;
+        
+        if (xamlTypeDeclaration.NamespaceAliases
+            .FirstOrDefault(x => x.UnquotedValue == $"clr-namespace:{nspath}") is {} aliasMatch)
+        {
+            namespaceAlias = aliasMatch;
+        }
+        else
+        {
+            // Create a namespace ViewModel that point to the namespace
+            // Note: Things will die if viewModel is already present. Should be refined later on
+            namespaceAlias = xamlFactory.CreateNamespaceAlias("viewModel", $"clr-namespace:{nspath}");
+            
+             // Add the newly created alias after the last namespacealias attribute
+                    xamlTypeDeclaration.AddAttributeAfter(namespaceAlias,
+                        xamlTypeDeclaration.GetAttributes()
+                            .OfType<NamespaceAliasAttribute>()
+                            .LastOrDefault());
+        }
+              
+        // Based on the technology we set the datacontext differently
+        // For avalonia it is set through the DataType attribute and for wpf we set
+        // the design context
+        
+        if (Kind == DesktopKind.Avalonia)
+        {
+            // Set the DataType to point to the newly created viewModel
+                        
+            // Create the DataType attribute and add it
+            var dataTypeAttribute = xamlFactory.CreateRootAttribute($"x:DataType=\"{namespaceAlias.XmlName}:{viewName}\"");
+            xamlTypeDeclaration.AddAttributeAfter(dataTypeAttribute, xamlTypeDeclaration.GetAttributes()
+                .OfType<NamespaceAliasAttribute>()
+                .LastOrDefault() );
+
+            // Try to format it (not working as I would want right now)
+            var codeFormatter = ModificationUtil.GetCodeFormatter(xamlFile.Language.LanguageService());
+            codeFormatter.Format(xamlFile, CodeFormatProfile.STRICT);
+        }
+        else if (Kind == DesktopKind.Wpf)
+        {
+            // d:DataContext="{d:DesignInstance Type=Something, IsDesignTimeCreatable=False}"
+            var dataTypeAttribute = xamlFactory.CreateRootAttribute(
+                $$"""d:DataContext="{d:DesignInstance Type=viewModel:{{viewName}}, IsDesignTimeCreatable=False}" """);
+            xamlTypeDeclaration.AddAttributeAfter(dataTypeAttribute, xamlTypeDeclaration.GetAttributes()
+                .OfType<NamespaceAliasAttribute>()
+                .LastOrDefault() );
+        }
+    }
+
     public override string Text => "Create viewmodel";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         if (_provider.GetSelectedTreeNode<IXamlFile>() is { } node)
         {
-            var project = node.GetProject().ProjectProperties.GetActiveConfigurations<CSharpProjectConfiguration>().ToList();
-            
-            if (project.SafeGetProjectProperty("UseWPF").Equals("true", StringComparison.OrdinalIgnoreCase))
+            var rootType = node.GetTypeDeclarations().FirstOrDefault();
+            if (rootType == null)
+                return false;
+
+            if (rootType.Type.GetTypeElement()?.ShortName == "Application")
+                return false;
+
+            if (rootType.NamespaceAliases.FirstOrDefault(x => x.XmlName == "xmlns")?.UnquotedValue is { } xmlns)
             {
-                Kind = DesktopKind.Wpf;
-            }
-            else
-            {
-                Kind = DesktopKind.Avalonia;
+                // if xmlns matches the wpf spec check if the d:DataContext attribute is set
+                // if not set the createViewModel action is available
+                
+                if (xmlns == "http://schemas.microsoft.com/winfx/2006/xaml/presentation")
+                {
+                    Kind = DesktopKind.Wpf;
+                    return !rootType.GetAttributes()
+                        .Any(x => x.XmlName == XamlConstants.DataContextName && x.XmlNamespace == "d");
+                }
+                if (xmlns == "https://github.com/avaloniaui")
+                {
+                    Kind = DesktopKind.Avalonia;
+                    return rootType.GetAttributes().All(x => x.XmlName != XamlConstants.DatatypeName);
+                }
+                
             }
             
-            return !node.GetTypeDeclarations()
-                .Any(x => x.GetAttributes().Any(y => y.XmlName == XamlConstants.DatatypeName));
+            
+            
+            
         }
 
         return false;
@@ -227,9 +293,6 @@ public class CreateViewModelAction : ContextActionBase
         {
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
         }    
-        
-
-        
     }
 }
 
