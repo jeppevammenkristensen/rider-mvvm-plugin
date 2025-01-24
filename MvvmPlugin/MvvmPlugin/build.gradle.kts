@@ -21,6 +21,10 @@ val DotnetPluginId: String by project
 val RiderPluginId: String by project
 val PublishToken: String by project
 
+tasks.buildSearchableOptions {
+    enabled = false
+}
+
 allprojects {
     repositories {
         maven { setUrl("https://cache-redirector.jetbrains.com/maven-central") }
