@@ -6,7 +6,7 @@
     <SdkVersion>2024.3.3</SdkVersion>
 
     <Title>Mvvm Helper</Title>
-    <Description>A plugin to help with various Mvvm related operations</Description>
+    <Description>Provides different helpers to assist with developing a .NET based MVVM solution</Description>
 
     <Authors>Jeppe Roi Kristensen</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of Mvvm Helper</Copyright>

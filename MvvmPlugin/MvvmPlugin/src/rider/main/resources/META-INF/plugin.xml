@@ -8,7 +8,11 @@
 
   <description>
 <![CDATA[
-<p>This is a plugin that provides different context actions to help when developing a MVVM solution in a Xaml based solution</p>
+  <p>Provides different helpers to assist with developing a .NET based MVVM solution:</p>
+    <ul>
+        <li>Create ViewModel from within a XAML view (Context Action)
+        <li>
+    </ul>
 ]]>
   </description>
 
