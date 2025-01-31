@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ReSharper.Psi;
 
@@ -19,28 +21,11 @@ public static class Extensions
         return defaultValue;
     }
 
-    // public static bool InheritsFrom(this ITypeElement type, IDeclaredType baseType, HashSet<string>? testedTypes = null)
-    // {
-    //     testedTypes ??= new HashSet<string>();
-    //     var baseTypes = type.GetSuperTypeElements();
-    //
-    //     while (baseTypes is {Count: > 0})
-    //     {
-    //         foreach (var baseTypeElement in baseTypes)
-    //         {
-    //             // if the type has already been tested we continue (just to ensure
-    //             // that we don't create a stack overflow
-    //             if (!testedTypes.Add(baseTypeElement.GetClrName().FullName))
-    //                 continue;
-    //
-    //             if (baseTypeElement.IsValid() && baseTypeElement.Equals(baseType))
-    //                 return true;
-    //
-    //             if (InheritsFrom(baseTypeElement, baseType, testedTypes))
-    //                 return true;
-    //         }
-    //     }
-    //
-    //     return false;
-    // }
+    public static string ToSnakeCase(this string propertyName)
+    {
+        if (propertyName.Length == 0 || propertyName[0] == '_')
+        return propertyName;
+
+        return string.Concat($"_{char.ToLower(propertyName[0])}{propertyName.Substring(1)}");
+    }
 }
