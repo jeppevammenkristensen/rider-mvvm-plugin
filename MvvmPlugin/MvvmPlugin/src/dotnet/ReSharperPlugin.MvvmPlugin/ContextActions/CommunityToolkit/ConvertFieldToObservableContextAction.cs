@@ -3,35 +3,25 @@ using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
-using JetBrains.ReSharper.Feature.Services.Psi;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
-using ReSharperPlugin.MvvmPlugin.Extensions;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
-    Name = "Create viewmodel",
-    Description = "Creates a viewmodel for the selected XAML file.",
+    Name = "Make field observable",
+    Description = "Decorates the selected field with the ObservablePropertyAttribute",
     GroupType = typeof(CSharpContextActions))]
-public class ConvertPropertyToObservableContextAction : ContextActionBase
+public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
-    private readonly ICSharpContextActionDataProvider _provider;
-
-    public ConvertPropertyToObservableContextAction(ICSharpContextActionDataProvider provider)
-    {
-        _provider = provider;
-    }
-    
     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
-        if (_provider.GetSelectedTreeNode<IFieldDeclaration>() is not { } fieldDeclaration)
+        if (provider.GetSelectedTreeNode<IFieldDeclaration>() is not { } fieldDeclaration)
             return null;
         
         using (WriteLockCookie.Create())
@@ -45,7 +35,7 @@ public class ConvertPropertyToObservableContextAction : ContextActionBase
                 cSharpTypeDeclaration.SetPartial(true);
             }
 
-            var factory = CSharpElementFactory.GetInstance(_provider.GetSelectedTreeNode<ICSharpFile>()!);
+            var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
             var observableProperty = TypeFactory.CreateTypeByCLRName(
                 "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
                 fieldDeclaration.GetPsiModule());
@@ -56,26 +46,29 @@ public class ConvertPropertyToObservableContextAction : ContextActionBase
         }
     }
 
-    public override string Text => "Convert to Observable Property";
+    public override string Text => "Decorate with ObservablePropertyAttribute";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;
         
-        if (_provider.GetSelectedTreeNode<IFieldDeclaration>() is { } fieldDeclaration)
+        // Check is this is a field declartion
+        if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { } fieldDeclaration)
         {
             // Check if the containing class implements the ObservableObject in some way or another
-
             if (TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
                     fieldDeclaration.GetPsiModule()) is {IsUnknown: false} observableAttribute)
             {
+                // Find the containing class and exit if it is not found
                 var containingClass = fieldDeclaration.GetContainingTypeDeclaration();
                 if (containingClass == null)
                     return false;
                 
                 
+                // Retrieve the ObservableObject type
                 var observableObject = TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject",
                     containingClass!.GetPsiModule());
 
+                // If the given class does not inherit in some way from ObservableObject return false
                 if (!containingClass.DeclaredElement.IsDescendantOf(observableObject.GetTypeElement()))
                 {
                     return false;
@@ -93,9 +86,6 @@ public class ConvertPropertyToObservableContextAction : ContextActionBase
                 }
                 
                 
-                // containing class should inherite from observableobject or an object that inherits from it
-                
-                return false;
             }
         }
         
