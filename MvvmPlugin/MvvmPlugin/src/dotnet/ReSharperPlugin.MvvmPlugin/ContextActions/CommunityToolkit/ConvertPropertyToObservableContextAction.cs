@@ -22,7 +22,10 @@ using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
-[ContextAction(Name = "Make property observable", Description = "Converts the property to a field and decorates it with the ObservableProperty", GroupType = typeof(CSharpContextActions))]
+[ContextAction(
+    Name = "Make property observable",
+    Description = "Converts the property to a field and decorates it with the ObservableProperty", 
+    GroupType = typeof(CSharpContextActions))]
 public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
     /// <summary>

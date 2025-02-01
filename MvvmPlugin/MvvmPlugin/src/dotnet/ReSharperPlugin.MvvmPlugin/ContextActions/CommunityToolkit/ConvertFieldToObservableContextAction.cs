@@ -46,7 +46,7 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
         }
     }
 
-    public override string Text => "Make field observable";
+    public override string Text => "Make Field Observable";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;
