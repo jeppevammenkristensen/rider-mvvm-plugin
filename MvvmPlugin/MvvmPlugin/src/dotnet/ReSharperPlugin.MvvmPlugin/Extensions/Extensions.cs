@@ -3,8 +3,55 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.Util;
+using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
+
+
+public static class ContextActionUtil
+{
+    /// <summary>
+    /// Ensures partial and that the declaration inherits from ObservableObject
+    /// If the ObservableObject could not be found false will be retured
+    /// </summary>
+    /// <param name="declaration"></param>
+    /// <param name="observableObject">If null the type will be loaded when this method is called</param>
+    /// <returns></returns>
+    public static bool EnsurePartialAndInheritsObservableObject(this ICSharpTypeDeclaration? classLikeDeclaration, IDeclaredType? observableObject)
+    {
+        if (classLikeDeclaration is not IClassDeclaration declaration)
+            return false;
+        
+        observableObject ??= PluginUtil.GetObservableObject(declaration);
+        if (observableObject is { IsUnknown: true})
+        {
+            return false;
+        }
+        
+        if (declaration.DeclaredElement is null)
+        {
+            return false;
+        }
+        
+        if (!declaration.IsPartial)
+        {
+            declaration.SetPartial(true);
+        }
+
+        if (!declaration.DeclaredElement.IsDescendantOf(observableObject.GetTypeElement()))
+        {
+            if (!declaration.SuperTypes.Any(x => x.IsClassType()))
+            {
+                declaration.SetSuperClass(observableObject);
+            }
+        }
+
+        return true;
+
+    }
+}
 
 public static class Extensions
 {

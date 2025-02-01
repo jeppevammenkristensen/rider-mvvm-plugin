@@ -13,13 +13,14 @@ using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
+using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
     Name = "Make observable object",
-    Description = "Makes the class inherit from ObservableObject",
+    Description = "Lets the class inherit from ObservableObject. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
 public class MakeObservableContextAction : ContextActionBase
 {
@@ -37,19 +38,12 @@ public class MakeObservableContextAction : ContextActionBase
         
         using (WriteLockCookie.Create())
         {
-            if (!classLikeDeclaration.IsPartial)
-            {
-                classLikeDeclaration.SetPartial(true);
-            }
-
-            var observableProperty = PluginUtil.GetObservableObject(classLikeDeclaration);
-
-            classLikeDeclaration.SetSuperClass(observableProperty);
+            classLikeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null);
             return null;
         }
     }
 
-    public override string Text => "Make ObservableObject";
+    public override string Text => "Make class ObservableObject";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;
@@ -58,14 +52,16 @@ public class MakeObservableContextAction : ContextActionBase
         {
             // Check if the containing class implements the ObservableObject in some way or another
 
-            if (TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject",
-                    classLikeDeclaration.GetPsiModule()) is {IsUnknown: false} observableObject)
+            if (PluginUtil.GetObservableObject(classLikeDeclaration) is {IsUnknown:false} observableObject)
             {
                 var declaredElement = classLikeDeclaration.DeclaredElement;
                 if (declaredElement == null)
                     return false;
 
-                return !declaredElement.IsDescendantOf(observableObject.GetTypeElement());
+                if (!classLikeDeclaration.IsPartial)
+                    return true;
+
+                return !declaredElement.IsDescendantOf(observableObject.GetTypeElement()) && !classLikeDeclaration.SuperTypes.Any(x => x.IsClassType());
             }
         }
         

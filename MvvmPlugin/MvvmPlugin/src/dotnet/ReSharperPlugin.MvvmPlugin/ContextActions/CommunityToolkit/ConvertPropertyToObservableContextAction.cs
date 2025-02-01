@@ -4,66 +4,71 @@ using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.LinqTools;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
+using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
+using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
-[ContextAction(Name = "Make property observable", Description = "Converts the property to an observable property", GroupType = typeof(CSharpContextActions))]
+[ContextAction(Name = "Make property observable", Description = "Converts the property to a field and decorates it with the ObservableProperty", GroupType = typeof(CSharpContextActions))]
 public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
+    /// <summary>
+    /// <see cref="ExecutePsiTransaction"/>
+    /// </summary>
+    /// <param name="solution"></param>
+    /// <param name="progress"></param>
+    /// <returns></returns>
     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return null;
         
         var cSharpTypeDeclaration = propertyDeclaration.GetContainingTypeDeclaration();
-        if (cSharpTypeDeclaration is not IClassDeclaration classLikeDeclaration)
-            return null;
 
-        if (classLikeDeclaration.DeclaredElement is null)
-        {
-            return null;
-        }
+        
 
         if (PluginUtil.GetObservableObject(propertyDeclaration) is {IsUnknown: false} observableObject &&
             PluginUtil.GetObservablePropertyAttribute(propertyDeclaration) is {IsUnknown: false} observableProperty)
         {
             using (WriteLockCookie.Create())
             {
-                if (!cSharpTypeDeclaration.IsPartial)
-                {
-                    cSharpTypeDeclaration.SetPartial(true);
-                }
+                // This will ensure that the containing class is partial and if possible
+                // inherits from ObservableObject
+                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject))
+                    return null;
 
-                if (!classLikeDeclaration.DeclaredElement.IsDescendantOf(observableObject.GetTypeElement()))
-                {
-                    if (classLikeDeclaration.SuperTypes.FirstOrDefault() is { } first &&
-                        first.GetTypeElement().IsClassLike())
-                    {
-                        classLikeDeclaration.SetSuperClass(observableObject);
-                    }
-                }
-
+                // Get the factory we will use to generate a field
                 var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
 
-                var field = factory.CreateTypeMemberDeclaration("[$0]\r\nprivate $1 $2;",
-                    observableProperty,
-                    propertyDeclaration.Type, Extensions.Extensions.ToSnakeCase(propertyDeclaration.DeclaredName));
+                // Create a field declaration with the type from the property and a snake cased name
+                // The property should have a summart with a cref to the property that is generated behind
+                // it will also be decorated with the ObservableProperty attribute
+                var field = factory
+                    .CreateTypeMemberDeclaration($"/// <summary>\n    /// <see cref=\"{propertyDeclaration.DeclaredName}\"/>\n    /// </summary>\n[$0]\nprivate $1 $2;",
+                     observableProperty,
+                    propertyDeclaration.Type, propertyDeclaration.DeclaredName.ToSnakeCase());
 
-                if (field is IFieldDeclaration {Parent: IMultipleFieldDeclaration fieldDeclaration})
+                if (field is IFieldDeclaration  {Parent: IMultipleFieldDeclaration multiFieldDeclaration} fieldDeclaration)
                 {
-                    ModificationUtil.ReplaceChild(propertyDeclaration, fieldDeclaration);    
+                    // If there is a initalizer on the property. For instance = "Hello World" 
+                    // we apply that to the field
+                    if (propertyDeclaration.Initializer is IExpressionInitializer initializer)
+                    {
+                        fieldDeclaration.SetInitial(initializer);
+                    }
+                    
+                    // Replace the property with the field
+                    ModificationUtil.ReplaceChild(propertyDeclaration, multiFieldDeclaration);    
                 }
-                
-
             }
         }
 
