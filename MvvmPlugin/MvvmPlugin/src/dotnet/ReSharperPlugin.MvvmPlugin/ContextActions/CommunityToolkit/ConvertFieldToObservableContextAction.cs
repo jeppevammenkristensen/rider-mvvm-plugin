@@ -10,12 +10,14 @@ using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
+using ReSharperPlugin.MvvmPlugin.Extensions;
+using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
     Name = "Make field observable",
-    Description = "Decorates the selected field with the ObservablePropertyAttribute",
+    Description = "Decorates the selected field with the ObservablePropertyAttribute. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
 public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
@@ -27,65 +29,48 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
         using (WriteLockCookie.Create())
         {
             var cSharpTypeDeclaration = fieldDeclaration.GetContainingTypeDeclaration();
-            if (cSharpTypeDeclaration == null)
+
+            if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null))
                 return null;
-            
-            if (!cSharpTypeDeclaration.IsPartial)
-            {
-                cSharpTypeDeclaration.SetPartial(true);
-            }
 
             var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
             var observableProperty = TypeFactory.CreateTypeByCLRName(
                 "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
                 fieldDeclaration.GetPsiModule());
 
+         
             var before = fieldDeclaration.AddAttributeBefore(factory.CreateAttribute(observableProperty!.GetTypeElement()!), null);
-            fieldDeclaration.AddLineBreakBefore();
+            before.AddLineBreakAfter();
+            
             return null;
         }
     }
 
-    public override string Text => "Decorate with ObservablePropertyAttribute";
+    public override string Text => "Make field observable";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;
         
         // Check is this is a field declartion
-        if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { } fieldDeclaration)
+        if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { DeclaredElement: {} } fieldDeclaration)
         {
             // Check if the containing class implements the ObservableObject in some way or another
-            if (TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
-                    fieldDeclaration.GetPsiModule()) is {IsUnknown: false} observableAttribute)
+            if (PluginUtil.GetObservablePropertyAttribute(fieldDeclaration) is {IsUnknown: false} observableAttribute)
             {
-                // Find the containing class and exit if it is not found
-                var containingClass = fieldDeclaration.GetContainingTypeDeclaration();
-                if (containingClass == null)
-                    return false;
-                
-                
-                // Retrieve the ObservableObject type
-                var observableObject = TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject",
-                    containingClass!.GetPsiModule());
-
-                // If the given class does not inherit in some way from ObservableObject return false
-                if (!containingClass.DeclaredElement.IsDescendantOf(observableObject.GetTypeElement()))
-                {
-                    return false;
-                }
-
+                // If the field declaration has no Attributes we return true 
+                // as the ObservablePropertyAttribute can safely be added
                 if (!fieldDeclaration.Attributes.Any())
                 {
                     FieldDeclaration = fieldDeclaration;
                     return true;
                 }
-                else
-                {
-                    return !fieldDeclaration.DeclaredElement.HasAttributeInstance(observableAttribute.GetClrName(),
-                        false);
-                }
-                
-                
+
+                // If the field is not allready decorated with a ObservableProperty attribute we
+                // return true
+                return !fieldDeclaration.DeclaredElement.HasAttributeInstance(observableAttribute.GetClrName(),
+                    false);
+
+
             }
         }
         
