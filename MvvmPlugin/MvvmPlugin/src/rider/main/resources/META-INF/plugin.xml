@@ -11,7 +11,15 @@
   <p>Provides different helpers to assist with developing a .NET based MVVM solution:</p>
     <ul>
         <li>Create ViewModel from within a XAML view (Context Action)
+        </li>
         <li>
+           Community Toolkit assistance:
+           <ul>
+              <li>Make Class (Context Action)</li>
+              <li>Make Field Observable (Context Action)</li>
+              <li>Make Property Observable (Context Action)</li>
+           </ul>           
+        </li>        
     </ul>
 ]]>
   </description>

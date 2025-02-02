@@ -24,8 +24,8 @@ public static class ContextActionUtil
         if (classLikeDeclaration is not IClassDeclaration declaration)
             return false;
         
-        observableObject ??= PluginUtil.GetObservableObject(declaration);
-        if (observableObject is { IsUnknown: true})
+        observableObject ??= PluginUtil.GetObservableObject(declaration).ShouldBeKnown();
+        if (observableObject is null)
         {
             return false;
         }
