@@ -22,4 +22,18 @@ public static class PluginUtil
             "CommunityToolkit.Mvvm.ComponentModel.ObservableObject",
             treeNode.GetPsiModule());
     }
+
+    /// <summary>
+    /// Returns the given type as null if it is unknown
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static IDeclaredType? ShouldBeKnown(this IDeclaredType type)
+    {
+        return type.Classify switch
+        {
+            TypeClassification.UNKNOWN => null,
+            _ => type
+        };
+    }
 }

@@ -59,8 +59,8 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
             } 
         }
 
-        if (PluginUtil.GetObservableObject(propertyDeclaration) is {IsUnknown: false} observableObject &&
-            PluginUtil.GetObservablePropertyAttribute(propertyDeclaration) is {IsUnknown: false} observableProperty)
+        if (PluginUtil.GetObservableObject(propertyDeclaration).ShouldBeKnown() is {} observableObject &&
+            PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is {} observableProperty)
         {
             using (WriteLockCookie.Create())
             {
@@ -156,7 +156,7 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return false;
 
-        if (PluginUtil.GetObservablePropertyAttribute(propertyDeclaration) is not {IsUnknown: false} observableProperty)
+        if (PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is not {} observableProperty)
             return false;
 
         if (observableProperty.Assembly?.Version is { } version &&

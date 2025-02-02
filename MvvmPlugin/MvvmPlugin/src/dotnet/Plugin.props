@@ -3,15 +3,14 @@
   <PropertyGroup>
     <!-- See https://www.nuget.org/packages/JetBrains.ReSharper.SDK -->
     <!-- Keep in sync with ProductVersion in gradle.properties -->
-    <SdkVersion>2024.3.4</SdkVersion>
+    <SdkVersion>2025.1.0-eap01</SdkVersion>
 
     <Title>Mvvm Helper</Title>
     <Description>Provides different helpers to assist with developing a .NET based MVVM solution</Description>
 
     <Authors>Jeppe Roi Kristensen</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of Mvvm Helper</Copyright>
-    <PackageTags>resharper plugin rider</PackageTags>
-
+    <PackageTags>resharper plugin rider</PackageTags>    
     <PackageProjectUrl>https://github.com/jeppevammenkristensen/rider-mvvm-plugin</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>    
     <PackageIconUrl></PackageIconUrl>

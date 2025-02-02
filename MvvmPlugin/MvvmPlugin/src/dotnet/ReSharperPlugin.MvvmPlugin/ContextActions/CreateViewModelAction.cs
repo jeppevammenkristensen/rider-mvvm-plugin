@@ -50,7 +50,6 @@ public class CreateViewModelAction : ContextActionBase
     
     private static Regex _matchViewRegex = new Regex("View$", RegexOptions.IgnoreCase);
     private readonly XamlContextActionDataProvider _provider;
-    private readonly Lifetime _lifetime;
 
     public CreateViewModelAction(XamlContextActionDataProvider provider)
     {

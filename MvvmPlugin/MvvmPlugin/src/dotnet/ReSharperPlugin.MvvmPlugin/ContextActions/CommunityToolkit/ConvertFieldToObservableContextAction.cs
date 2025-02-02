@@ -55,7 +55,7 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { DeclaredElement: {} } fieldDeclaration)
         {
             // Check if the containing class implements the ObservableObject in some way or another
-            if (PluginUtil.GetObservablePropertyAttribute(fieldDeclaration) is {IsUnknown: false} observableAttribute)
+            if (PluginUtil.GetObservablePropertyAttribute(fieldDeclaration).ShouldBeKnown() is {} observableAttribute)
             {
                 // If the field declaration has no Attributes we return true 
                 // as the ObservablePropertyAttribute can safely be added
@@ -69,8 +69,6 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
                 // return true
                 return !fieldDeclaration.DeclaredElement.HasAttributeInstance(observableAttribute.GetClrName(),
                     false);
-
-
             }
         }
         

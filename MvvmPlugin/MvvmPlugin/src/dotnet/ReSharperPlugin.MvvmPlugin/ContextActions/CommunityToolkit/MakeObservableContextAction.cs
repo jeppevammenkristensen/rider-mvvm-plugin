@@ -52,7 +52,7 @@ public class MakeObservableContextAction : ContextActionBase
         {
             // Check if the containing class implements the ObservableObject in some way or another
 
-            if (PluginUtil.GetObservableObject(classLikeDeclaration) is {IsUnknown:false} observableObject)
+            if (PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown() is { } observableObject)
             {
                 var declaredElement = classLikeDeclaration.DeclaredElement;
                 if (declaredElement == null)
