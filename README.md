@@ -16,7 +16,12 @@ If the CommunityToolkit.Mvvm package is installed a range of context actions are
 
 #### Make Class Observable
 
-When inside a class you can active the `Make Class Observable` context action to make the class inherit from ObservableObject and make the class partial
+When inside a class you can active the `Make Class Observable` context action to make the class inherit from ObservableObject and make the class partial. 
+
+Unlike the actions below it is possible to call this context action if `CommunityToolkit.Mvvm` is not installed. It will only be available for classes that ends with viewModel. And you will need to install the nuget plugin manually afterwards. (My goal is to in a later version make the installation of the nuget package be done by the context action)
+
+![image](https://github.com/user-attachments/assets/b7d4a1b7-de1d-451a-9760-2b9118483a65)
+
 
 #### Make Field Observable
 
