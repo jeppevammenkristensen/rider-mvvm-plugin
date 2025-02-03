@@ -5,10 +5,7 @@ using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CodeStyle;
-using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
@@ -38,7 +35,22 @@ public class MakeObservableContextAction : ContextActionBase
         
         using (WriteLockCookie.Create())
         {
-            classLikeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null);
+
+            if (!ObservableInstalled)
+            {
+                // I haven't figured out how to install a nuget package. But 
+                // here should be code that will install the CommunityToolkit.Mvvm
+                // if it isn't installed.
+                // For now if it isn't installed the generated code will not be compilable
+                // but the ObservableObject will be generated so you can use resharper/rider to 
+                // right click and install it. 
+                
+                // var project = classLikeDeclaration.GetProject();
+                // const string packageName = "CommunityToolkit.Mvvm";    
+            }
+            
+            
+            classLikeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null, supressObservableObjectNotFound: true);
             return null;
         }
     }
@@ -54,20 +66,47 @@ public class MakeObservableContextAction : ContextActionBase
 
             if (PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown() is { } observableObject)
             {
-                var declaredElement = classLikeDeclaration.DeclaredElement;
-                if (declaredElement == null)
-                    return false;
+                ObservableInstalled = true;
+                
+                
+               var declaredElement = classLikeDeclaration.DeclaredElement;
+               if (declaredElement == null)
+                   return false;
 
-                if (!classLikeDeclaration.IsPartial)
-                    return true;
-
-                return !declaredElement.IsDescendantOf(observableObject.GetTypeElement()) && !classLikeDeclaration.SuperTypes.Any(x => x.IsClassType());
+               if (declaredElement.IsDescendantOf(observableObject.GetTypeElement()))
+               {
+                   return false;
+               }
             }
+            else
+            {
+                // We land here if we could not get the ObservableObject (the package is not installed)
+                // For now (to not present the context action all the time) we check if the name of the given
+                // class ends with ViewModel if not we return false
+                if (!classLikeDeclaration.DeclaredName.EndsWith("ViewModel", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+            
+            if (classLikeDeclaration.SuperTypes.Any(x => x.IsClassType()))
+            {
+                return false;
+            }
+
+            if (!classLikeDeclaration.IsPartial)
+                return true;
+
+            
         }
+        
+        
         
 
         return false;
     }
+
+    public bool ObservableInstalled { get; set; }
 
     public IFieldDeclaration? FieldDeclaration { get; private set; }
 }

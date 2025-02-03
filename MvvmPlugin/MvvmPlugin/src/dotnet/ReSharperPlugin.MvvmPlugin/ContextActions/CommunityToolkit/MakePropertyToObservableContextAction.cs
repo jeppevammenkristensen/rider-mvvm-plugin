@@ -7,13 +7,11 @@ using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
-using JetBrains.ReSharper.Feature.Services.LinqTools;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
 using JetBrains.ReSharper.Psi.Tree;
-using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
@@ -26,7 +24,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
     Name = "Make property observable",
     Description = "Converts the property to a field and decorates it with the ObservableProperty", 
     GroupType = typeof(CSharpContextActions))]
-public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
     /// <summary>
     /// <see cref="ExecutePsiTransaction"/>
@@ -66,7 +64,7 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
             {
                 // This will ensure that the containing class is partial and if possible
                 // inherits from ObservableObject
-                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject))
+                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject, supressObservableObjectNotFound: false))
                     return null;
                 
                 // Get the factory we will use to generate a field
@@ -81,7 +79,7 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
                 }
                 
                 // Create a field declaration with the type from the property and a snake cased name
-                // The property should have a summart with a cref to the property that is generated behind
+                // The property should have a summary with a cref to the property that is generated behind
                 // it will also be decorated with the ObservableProperty attribute
                 
                  var field = BuildField(factory, propertyDeclaration, observableProperty);
@@ -146,8 +144,6 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
         }
 
         return field;
-
-
     }
 
     public override string Text => "Make property observable";
@@ -159,10 +155,10 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
         if (PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is not {} observableProperty)
             return false;
 
-        if (observableProperty.Assembly?.Version is { } version &&
-            (version is {Major: 8, Minor: >= 4} || version.Major >= 9))
-            LargerThanOrEqualToVersion84 = true;
-            
+        if (!propertyDeclaration.CommunityToolkitCanHandleSourceGenerators(observableProperty))
+            return false;
+
+        LargerThanOrEqualToVersion84 = propertyDeclaration.CommunityToolkitCanHandlePartialProperties(observableProperty);
 
         if (propertyDeclaration.DeclaredElement?.HasAttributeInstance(observableProperty.GetClrName(), false) == true)
             return false;
@@ -171,7 +167,5 @@ public class ConvertPropertyToObservableContextAction(ICSharpContextActionDataPr
 
     }
 
-    public bool LargerThanOrEqualToVersion84 { get; set; }
-
-    public Version? CommunityToolkitVersion { get; set; }
+    private bool LargerThanOrEqualToVersion84 { get; set; }
 }
