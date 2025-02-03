@@ -19,7 +19,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
     Name = "Make field observable",
     Description = "Decorates the selected field with the ObservablePropertyAttribute. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
-public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
@@ -30,7 +30,7 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
         {
             var cSharpTypeDeclaration = fieldDeclaration.GetContainingTypeDeclaration();
 
-            if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null))
+            if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null, false))
                 return null;
 
             var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
@@ -54,9 +54,16 @@ public class ConvertFieldToObservableContextAction(ICSharpContextActionDataProvi
         // Check is this is a field declartion
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { DeclaredElement: {} } fieldDeclaration)
         {
+            if (!fieldDeclaration.LanguageVersionSupportCommunityToolkitSourceGenerators())
+                return false;
+
             // Check if the containing class implements the ObservableObject in some way or another
             if (PluginUtil.GetObservablePropertyAttribute(fieldDeclaration).ShouldBeKnown() is {} observableAttribute)
             {
+                // This checks if the version of community toolkit is minimum 8.0.0
+                if (!fieldDeclaration.CommunityToolkitCanHandleSourceGenerators(observableAttribute))
+                    return false;
+                
                 // If the field declaration has no Attributes we return true 
                 // as the ObservablePropertyAttribute can safely be added
                 if (!fieldDeclaration.Attributes.Any())
