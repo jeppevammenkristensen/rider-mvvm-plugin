@@ -32,16 +32,9 @@ public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider p
 
             if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null, false))
                 return null;
-
-            var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
-            var observableProperty = TypeFactory.CreateTypeByCLRName(
-                "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
-                fieldDeclaration.GetPsiModule());
-
-         
-            var before = fieldDeclaration.AddAttributeBefore(factory.CreateAttribute(observableProperty!.GetTypeElement()!), null);
-            before.AddLineBreakAfter();
             
+            var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
+            fieldDeclaration!.DecorateWithObservablePropertyAttribute(factory);
             return null;
         }
     }

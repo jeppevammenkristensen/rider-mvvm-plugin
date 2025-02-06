@@ -119,7 +119,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         // $1 Property type
         
         builder.AppendLine($"[$0]");
-        builder.AppendLine($"private $1 {propertyDeclaration.DeclaredName.ToSnakeCase()};");
+        builder.AppendLine($"private $1 {propertyDeclaration.DeclaredName.ToFieldName()};");
         
         var field = (IFieldDeclaration)factory.CreateTypeMemberDeclaration(builder.ToString(), observableProperty, propertyDeclaration.Type);
         
