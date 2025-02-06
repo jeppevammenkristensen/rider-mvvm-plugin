@@ -4,6 +4,8 @@ using System.Linq;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.CodeStyle;
+using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
@@ -62,12 +64,20 @@ public static class ContextActionUtil
             return false;
         }
         
-        return communityToolkitType.Assembly?.Version >= new Version(8,4);
-        
-        
+        return communityToolkitType.Assembly?.Version >= new Version(8,4) && treeNode.GetCSharpProjectConfiguration()?.LanguageVersion == CSharpLanguageVersion.Preview;
     }
 
 
+    public static void DecorateWithObservablePropertyAttribute(this ICSharpTypeMemberDeclaration typeDeclaration, CSharpElementFactory factory)
+    {
+        var observableProperty = TypeFactory.CreateTypeByCLRName(
+            "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
+            typeDeclaration.GetPsiModule());
+        
+        var before = typeDeclaration.AddAttributeBefore(factory.CreateAttribute(observableProperty!.GetTypeElement()!), null);
+        before.AddLineBreakAfter();
+    }
+    
     /// <summary>
     /// Ensures partial and that the declaration inherits from ObservableObject
     /// If the ObservableObject could not be found false will be retured
@@ -126,11 +136,32 @@ public static class Extensions
         return defaultValue;
     }
 
-    public static string ToSnakeCase(this string propertyName)
+    public static string ToFieldName(this string propertyName)
     {
         if (propertyName.Length == 0 || propertyName[0] == '_')
         return propertyName;
 
         return string.Concat($"_{char.ToLower(propertyName[0])}{propertyName.Substring(1)}");
+    }
+
+    public static string ToPropertyName(this string fieldName)
+    {
+        if (fieldName.Length == 0 || char.IsUpper(fieldName[0]))
+        return fieldName;
+
+        if (fieldName[0] == '_')
+        {
+            fieldName = fieldName.Substring(1);
+        }
+        
+        if (fieldName.Length == 0)
+        return string.Empty;
+        
+        if (fieldName.Length == 1)
+        return char.ToUpper(fieldName[0]).ToString();
+        
+        return string.Concat(char.ToUpper(fieldName[0]), fieldName.Substring(1));
+        
+        
     }
 }

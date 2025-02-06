@@ -19,6 +19,6 @@ public class ExtensionsTest
     [TestCase("A","_a")]
     public void ToSnakeCase_Generates_Expected_Result(string input, string expected)
     {
-        input.ToSnakeCase().Should().Be(expected);
+        input.ToFieldName().Should().Be(expected);
     }
 }
