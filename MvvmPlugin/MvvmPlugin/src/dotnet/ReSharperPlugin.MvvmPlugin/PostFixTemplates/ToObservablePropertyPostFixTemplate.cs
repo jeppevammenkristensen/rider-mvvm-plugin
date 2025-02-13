@@ -11,9 +11,12 @@ using ReSharperPlugin.MvvmPlugin.Extensions;
 
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
 
+
+
+
   // NOTE: This is a modified version of the IntroduceMemberTemplateBase
 
-  [PostfixTemplate("obsprop", "Generates a observable property", "Hello.obsprop")]
+  [PostfixTemplate("obsprop", "Generates a observable property","")]
 public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemplateBase
 {
     public override string TemplateName => "obsprop";
@@ -30,6 +33,7 @@ public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemp
         protected override IClassMemberDeclaration CreateMemberDeclaration(
             CSharpElementFactory factory)
         {
+            
             // We generate the property. The underlying class will ensure that it is given a good name
             if (info.UsePartial)
             {
@@ -40,6 +44,7 @@ public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemp
               propertyDeclaration.AddAccessorDeclarationAfter(accessorDeclaration1, null);
               propertyDeclaration.AddAccessorDeclarationBefore(accessorDeclaration2, null);
               propertyDeclaration.SetStatic(IsStatic);
+              propertyDeclaration.SetPartial(true);
 
               propertyDeclaration.DecorateWithObservablePropertyAttribute(factory);
               
@@ -51,8 +56,6 @@ public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemp
               fieldDeclaration.DecorateWithObservablePropertyAttribute(factory);
               return fieldDeclaration;
             }
-            
-            
         }
 
         protected override ICSharpTypeMemberDeclaration GetAnchorMember(

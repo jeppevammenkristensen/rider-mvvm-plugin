@@ -1,16 +1,27 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
+using JetBrains.Application.Resources;
+using JetBrains.DataFlow;
 using JetBrains.Diagnostics;
 using JetBrains.DocumentModel;
+using JetBrains.Lifetimes;
+using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.CSharp.PostfixTemplates;
 using JetBrains.ReSharper.Feature.Services.CSharp.PostfixTemplates.Behaviors;
 using JetBrains.ReSharper.Feature.Services.CSharp.PostfixTemplates.Contexts;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Hotspots;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.LiveTemplates;
+using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros;
+using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros.Implementations;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
 using JetBrains.ReSharper.Feature.Services.Lookup;
 using JetBrains.ReSharper.Feature.Services.PostfixTemplates;
 using JetBrains.ReSharper.Feature.Services.PostfixTemplates.Contexts;
+using JetBrains.ReSharper.LiveTemplates.UI.TemplateEditor;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
@@ -19,6 +30,7 @@ using JetBrains.ReSharper.Psi.Naming.Extentions;
 using JetBrains.ReSharper.Psi.Naming.Impl;
 using JetBrains.ReSharper.Psi.Pointers;
 using JetBrains.ReSharper.Psi.Tree;
+using JetBrains.ReSharper.Refactorings.IntroduceVariable.Impl;
 using JetBrains.TextControl;
 using JetBrains.Threading;
 using JetBrains.Util;
@@ -27,25 +39,90 @@ using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
 
+[MacroDefinition("mvvmCapitalize")]
+public class CapitalizeSuperMacroDef : SimpleMacroDefinition
+{
+    public override ParameterInfo[] Parameters
+    {
+        get
+        {
+            return new ParameterInfo[1]
+            {
+                new ParameterInfo(ParameterType.VariableReference)
+            };
+        }
+    }
+}
+
+[MacroImplementation(Definition = typeof (CapitalizeSuperMacroDef))]
+public class CapitalizeMacroImpl : SimpleMacroImplementation
+{
+    private readonly IMacroParameterValueNew myArgument;
+
+    public CapitalizeMacroImpl([Optional] MacroParameterValueCollection arguments)
+    {
+        this.myArgument = arguments.OptionalFirstOrDefault();
+    }
+
+    public override string EvaluateQuickResult(IHotspotContext context)
+    {
+        return this.myArgument != null ? this.Execute(this.myArgument.GetValue()) : (string) null;
+    }
+
+    private static string CapitalizeAlphanum(string s)
+    {
+        if (string.IsNullOrEmpty(s))
+            return s;
+        int startIndex = 0;
+        
+        int num = -1;
+        for (int index = 0; index < s.Length; ++index)
+        {
+            if (s[index] == '_')
+            {
+                startIndex = index + 1;
+            }
+            
+            if (s[index].IsLetterOrDigitFast())
+            {
+                num = index;
+                break;
+            }
+        }
+        if (num < 0)
+            return s;
+        char upper = char.ToUpper(s[num], CultureInfo.InvariantCulture);
+        return (int) s[num] == (int) upper ? s : s.Substring(startIndex, num-startIndex) + upper.ToString() + s.Substring(num + 1);
+    }
+
+    private string Execute(string text)
+    {
+        if (text == null)
+            return string.Empty;
+        if (text.Length > 0)
+            text = CapitalizeMacroImpl.CapitalizeAlphanum(text);
+        return text;
+    }
+}
+
 public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTemplate
 {
     public override PostfixTemplateInfo? TryCreateInfo(CSharpPostfixTemplateContext context)
     {
-        ICSharpDeclaration ownerDeclaration = ReturnStatementUtil.FindReturnOwnerDeclaration(context.Reference); if (ownerDeclaration == null)
+        ICSharpDeclaration ownerDeclaration = ReturnStatementUtil.FindReturnOwnerDeclaration(context.Reference);
+        if (ownerDeclaration == null)
             return null;
-      
-        if (PluginUtil.GetObservableObject(ownerDeclaration).ShouldBeKnown() is not {}  declaredType)
+
+        if (PluginUtil.GetObservableObject(ownerDeclaration).ShouldBeKnown() is not { } declaredType)
         {
             return null;
         }
-      
+
         if (!ownerDeclaration.CommunityToolkitCanHandleSourceGenerators(declaredType))
         {
             return null;
         }
 
-      
-      
         bool notValid;
         switch (ownerDeclaration.GetContainingNode<IClassLikeDeclaration>())
         {
@@ -57,6 +134,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
                 notValid = false;
                 break;
         }
+
         if (notValid)
             return null;
         foreach (CSharpPostfixExpressionContext expressionContext in context.Expressions)
@@ -79,12 +157,17 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
                             isMember = false;
                             break;
                     }
+
                     if (isMember)
                         continue;
                 }
-                return new IntroduceMemberPostfixTemplateInfo(TemplateName, expressionContext, expressionContext.Type, ownerDeclaration.CommunityToolkitCanHandlePartialProperties(declaredType), ownerDeclaration.DeclaredElement is IConstructor);
+
+                return new IntroduceMemberPostfixTemplateInfo(TemplateName, expressionContext, expressionContext.Type,
+                    ownerDeclaration.CommunityToolkitCanHandlePartialProperties(declaredType),
+                    ownerDeclaration.DeclaredElement is IConstructor);
             }
         }
+
         return null;
     }
 
@@ -134,8 +217,6 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
         private IReadOnlyList<string> myMemberNames = EmptyList<string>.Instance;
         [CanBeNull]
         private ITreeNodePointer<IClassMemberDeclaration> myMemberPointer;
-
-        private string _hello;
 
         protected IntroduceMemberBehaviorBase(
             [NotNull] ObservableIntroduceMemberTemplateBase.IntroduceMemberPostfixTemplateInfo info)
@@ -236,20 +317,41 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
             // NOTE: I haven't found out how to update the assignment identifier to a correct property name
             else
             {
+                
                 var treeNodeRange = treeNode.GetNameDocumentRange();
                 var dest = (IReferenceExpression) ((IAssignmentExpression) statement.Expression).Dest;
-
-                HotspotInfo hotspotInfo = new HotspotInfo(templateField: new TemplateField("memberName",
-                        new NameSuggestionsExpression(myMemberNames),
-                        0), documentRanges:
-                    [
-                        treeNodeRange
-                    ]);
-                DocumentOffset documentEndOffset =  treeNode.GetDocumentEndOffset();
-                var session = Info.ExecutionContext.LiveTemplatesManager.CreateHotspotSessionAtopExistingText(treeNode.GetSolution(), documentEndOffset, textControl, LiveTemplatesManager.EscapeAction.LeaveTextAndCaret, hotspotInfo);
+                
+                
+                MacroCallExpressionNew callExpressionNew = new MacroCallExpressionNew(new CapitalizeSuperMacroDef());
+                callExpressionNew.AddParameter(new VariableMacroParameter("Field"));
+                
+                // Create a hotspot for the field declaration using suggested member names
+                HotspotInfo fieldInfo =
+                    new HotspotInfo(templateField: new TemplateField("Field",
+                        new NameSuggestionsExpression(myMemberNames), 0), treeNodeRange);
+                
+                HotspotInfo propertyDeclarationInfo = new HotspotInfo(templateField: new TemplateField("Property",
+                        callExpressionNew,
+                        0),
+                    dest.NameIdentifier.GetDocumentRange()
+                );
+                
+                
+                
+                DocumentOffset documentEndOffset =  dest.GetDocumentEndOffset();
+                
+                var session = Info.ExecutionContext.LiveTemplatesManager
+                    .CreateHotspotSessionAtopExistingText(solution: statement.GetSolution(),
+                        endCaretPosition: documentEndOffset,
+                        textControl: textControl,
+                        escapeAction: LiveTemplatesManager.EscapeAction.LeaveTextAndCaret,
+                        hotspotInfos: [fieldInfo, propertyDeclarationInfo]);
+                
                 session.ExecuteAsync().NoAwait();
 
             }
         }
     }
+
+    
 }
