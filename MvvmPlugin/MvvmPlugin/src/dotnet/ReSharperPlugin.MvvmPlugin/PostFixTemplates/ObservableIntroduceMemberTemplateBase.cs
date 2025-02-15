@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
-using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using JetBrains.Application.Resources;
 using JetBrains.DataFlow;
@@ -39,72 +37,7 @@ using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
 
-[MacroDefinition("mvvmCapitalize")]
-public class CapitalizeSuperMacroDef : SimpleMacroDefinition
-{
-    public override ParameterInfo[] Parameters
-    {
-        get
-        {
-            return new ParameterInfo[1]
-            {
-                new ParameterInfo(ParameterType.VariableReference)
-            };
-        }
-    }
-}
-
-[MacroImplementation(Definition = typeof (CapitalizeSuperMacroDef))]
-public class CapitalizeMacroImpl : SimpleMacroImplementation
-{
-    private readonly IMacroParameterValueNew myArgument;
-
-    public CapitalizeMacroImpl([Optional] MacroParameterValueCollection arguments)
-    {
-        this.myArgument = arguments.OptionalFirstOrDefault();
-    }
-
-    public override string EvaluateQuickResult(IHotspotContext context)
-    {
-        return this.myArgument != null ? this.Execute(this.myArgument.GetValue()) : (string) null;
-    }
-
-    private static string CapitalizeAlphanum(string s)
-    {
-        if (string.IsNullOrEmpty(s))
-            return s;
-        int startIndex = 0;
-        
-        int num = -1;
-        for (int index = 0; index < s.Length; ++index)
-        {
-            if (s[index] == '_')
-            {
-                startIndex = index + 1;
-            }
-            
-            if (s[index].IsLetterOrDigitFast())
-            {
-                num = index;
-                break;
-            }
-        }
-        if (num < 0)
-            return s;
-        char upper = char.ToUpper(s[num], CultureInfo.InvariantCulture);
-        return (int) s[num] == (int) upper ? s : s.Substring(startIndex, num-startIndex) + upper.ToString() + s.Substring(num + 1);
-    }
-
-    private string Execute(string text)
-    {
-        if (text == null)
-            return string.Empty;
-        if (text.Length > 0)
-            text = CapitalizeMacroImpl.CapitalizeAlphanum(text);
-        return text;
-    }
-}
-
+// NOTE: This is a modified version of the IntroduceMemberTemplateBase
 public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTemplate
 {
     public override PostfixTemplateInfo? TryCreateInfo(CSharpPostfixTemplateContext context)
@@ -292,8 +225,8 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
             IExpressionStatement statement,
             Suffix suffix)
         {
-            IClassMemberDeclaration treeNode = myMemberPointer?.GetTreeNode();
-            if (treeNode == null)
+            IClassMemberDeclaration memberNode = myMemberPointer?.GetTreeNode();
+            if (memberNode == null)
                 return;
 
             // If we generate a partial. We will generate a hotspot that will allow the
@@ -307,7 +240,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
                     [
                         ((IReferenceExpression) ((IAssignmentExpression) statement.Expression).Dest).NameIdentifier
                         .GetDocumentRange(), // The assignment expression identifier
-                        treeNode.GetNameDocumentRange() // The property declaration
+                        memberNode.GetNameDocumentRange() // The property declaration
                     ]);
                 // The editing is performed on the assignment identifier
                 DocumentOffset documentEndOffset =  statement.GetDocumentEndOffset();
@@ -318,28 +251,32 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
             else
             {
                 
-                var treeNodeRange = treeNode.GetNameDocumentRange();
-                var dest = (IReferenceExpression) ((IAssignmentExpression) statement.Expression).Dest;
+                var memberNodeRange = memberNode.GetNameDocumentRange();
                 
+                // This will typically be for instance SomeProperty = "SomeValue";
+                var destination = (IReferenceExpression) ((IAssignmentExpression) statement.Expression).Dest;
                 
-                MacroCallExpressionNew callExpressionNew = new MacroCallExpressionNew(new CapitalizeSuperMacroDef());
+
+                // Assign a macro that will change _someProperty to SomeProperty
+                MacroCallExpressionNew callExpressionNew = new MacroCallExpressionNew(new MvvmCapitalizeMacroDef());
                 callExpressionNew.AddParameter(new VariableMacroParameter("Field"));
                 
-                // Create a hotspot for the field declaration using suggested member names
+                // Create a hotspot for the field declarations name using suggested member names
                 HotspotInfo fieldInfo =
                     new HotspotInfo(templateField: new TemplateField("Field",
-                        new NameSuggestionsExpression(myMemberNames), 0), treeNodeRange);
+                        new NameSuggestionsExpression(myMemberNames), 0), memberNodeRange);
                 
+                // And a hotspot for where the property is set in the constructor
+                // Someproperty = "Hello"
                 HotspotInfo propertyDeclarationInfo = new HotspotInfo(templateField: new TemplateField("Property",
                         callExpressionNew,
                         0),
-                    dest.NameIdentifier.GetDocumentRange()
+                    destination.NameIdentifier.GetDocumentRange()
                 );
                 
+                DocumentOffset documentEndOffset =  destination.GetDocumentEndOffset();
                 
-                
-                DocumentOffset documentEndOffset =  dest.GetDocumentEndOffset();
-                
+                // Create the hotspot session with the two hotspot infos
                 var session = Info.ExecutionContext.LiveTemplatesManager
                     .CreateHotspotSessionAtopExistingText(solution: statement.GetSolution(),
                         endCaretPosition: documentEndOffset,

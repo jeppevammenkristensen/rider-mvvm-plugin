@@ -12,10 +12,6 @@ using ReSharperPlugin.MvvmPlugin.Extensions;
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
 
 
-
-
-  // NOTE: This is a modified version of the IntroduceMemberTemplateBase
-
   [PostfixTemplate("obsprop", "Generates a observable property","")]
 public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemplateBase
 {
