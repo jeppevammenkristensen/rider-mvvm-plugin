@@ -16,7 +16,7 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
-    Name = "Make field observable",
+    Name = "Make field observable (CommunityToolkit)",
     Description = "Decorates the selected field with the ObservablePropertyAttribute. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
 public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
@@ -39,12 +39,12 @@ public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider p
         }
     }
 
-    public override string Text => "Make Field Observable";
+    public override string Text => "Make Field Observable (CommunityToolkit)";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;
         
-        // Check is this is a field declartion
+        // Check is this is a field declaration
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { DeclaredElement: {} } fieldDeclaration)
         {
             if (!fieldDeclaration.LanguageVersionSupportCommunityToolkitSourceGenerators())
@@ -65,7 +65,7 @@ public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider p
                     return true;
                 }
 
-                // If the field is not allready decorated with a ObservableProperty attribute we
+                // If the field is not already decorated with a ObservableProperty attribute we
                 // return true
                 return !fieldDeclaration.DeclaredElement.HasAttributeInstance(observableAttribute.GetClrName(),
                     false);

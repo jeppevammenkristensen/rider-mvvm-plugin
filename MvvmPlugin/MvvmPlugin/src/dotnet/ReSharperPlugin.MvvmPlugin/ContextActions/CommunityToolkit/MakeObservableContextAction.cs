@@ -16,7 +16,7 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
-    Name = "Make Class Observable",
+    Name = "Make Class Observable (CommunityToolkit)",
     Description = "Lets the class inherit from ObservableObject. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
 public class MakeObservableContextAction : ContextActionBase
@@ -55,7 +55,7 @@ public class MakeObservableContextAction : ContextActionBase
         }
     }
 
-    public override string Text => "Make Class ObservableObject";
+    public override string Text => "Make Class ObservableObject (CommunityToolkit)";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         FieldDeclaration = null;

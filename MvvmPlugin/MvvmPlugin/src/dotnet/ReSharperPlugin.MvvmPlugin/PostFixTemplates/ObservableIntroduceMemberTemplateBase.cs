@@ -24,6 +24,7 @@ using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.CSharp.Util;
+using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Naming.Extentions;
 using JetBrains.ReSharper.Psi.Naming.Impl;
 using JetBrains.ReSharper.Psi.Pointers;
@@ -171,7 +172,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
             ICSharpExpression expression)
         {
             IExpressionStatement statement = (IExpressionStatement) factory.CreateStatement("__ = expression;");
-            IClassMemberDeclaration memberDeclaration = CreateMemberDeclaration(factory);
+            IClassMemberDeclaration memberDeclaration = CreateMemberDeclaration(factory, statement.GetPsiModule());
             ((IAssignmentExpression) statement.Expression).SetSource(expression);
             NameSuggestionManager suggestion = expression.GetPsiServices().Naming.Suggestion;
             IClassLikeDeclaration classLikeDeclaration = expression.GetContainingNode<IClassLikeDeclaration>().NotNull<IClassLikeDeclaration>("expression.GetContainingNode<IClassLikeDeclaration>()");
@@ -218,7 +219,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
 
         [NotNull]
         protected abstract IClassMemberDeclaration CreateMemberDeclaration(
-            [NotNull] CSharpElementFactory factory);
+            [NotNull] CSharpElementFactory factory, IPsiModule module);
 
         protected override void AfterComplete(
             ITextControl textControl,

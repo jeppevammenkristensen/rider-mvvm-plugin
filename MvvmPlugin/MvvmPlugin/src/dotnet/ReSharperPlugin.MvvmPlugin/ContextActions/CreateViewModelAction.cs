@@ -268,12 +268,12 @@ public class CreateViewModelAction : ContextActionBase
                 {
                     Kind = DesktopKind.Wpf;
                     return !rootType.GetAttributes()
-                        .Any(x => x.XmlName == XamlConstants.DataContextName && x.XmlNamespace == "d");
+                        .Any(x => x.XmlName == PluginConstants.DataContextName && x.XmlNamespace == "d");
                 }
                 if (xmlns == "https://github.com/avaloniaui")
                 {
                     Kind = DesktopKind.Avalonia;
-                    return rootType.GetAttributes().All(x => x.XmlName != XamlConstants.DatatypeName);
+                    return rootType.GetAttributes().All(x => x.XmlName != PluginConstants.DatatypeName);
                 }
                 
             }
@@ -299,11 +299,4 @@ public class CreateViewModelAction : ContextActionBase
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
         }    
     }
-}
-
-public enum DesktopKind
-{
-    None,
-    Wpf,
-    Avalonia
 }
