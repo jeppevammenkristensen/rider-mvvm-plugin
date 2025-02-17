@@ -21,8 +21,8 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
 
 [ContextAction(
-    Name = "Make property observable",
-    Description = "Converts the property to a field and decorates it with the ObservableProperty", 
+    Name = "Make property observable (CommunityTookit)",
+    Description = "Converts the property to a field and decorates it with the ObservableProperty if partial properties are not supported. Otherwise it will make the property partial and decoreate with the ObservableProperty attribute", 
     GroupType = typeof(CSharpContextActions))]
 public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
@@ -48,10 +48,9 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
             // we use the approach with declaring a partial property instead of a field
             // Right now it requires this. It might change in the future
 
-            if (configuration.LanguageVersion == CSharpLanguageVersion.Preview && configuration.TargetFrameworkId is
-                {
-                   Version: {Major: >= 9}
-                })
+            if (configuration is {LanguageVersion: CSharpLanguageVersion.Preview, TargetFrameworkId: {
+                    Version: {Major: >= 9}
+                } target} && (target.IsNetCore || target.IsNetCoreApp))
             {
                 usePartialMethodAproach = true;
             } 
@@ -146,7 +145,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         return field;
     }
 
-    public override string Text => "Make property observable";
+    public override string Text => "Make property observable (CommunityTookit)";
     public override bool IsAvailable(IUserDataHolder cache)
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)

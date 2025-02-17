@@ -7,6 +7,7 @@ using JetBrains.ReSharper.Feature.Services.PostfixTemplates;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.Modules;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
@@ -27,23 +28,13 @@ public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemp
         IntroduceMemberBehaviorBase(info)
     {
         protected override IClassMemberDeclaration CreateMemberDeclaration(
-            CSharpElementFactory factory)
+            CSharpElementFactory factory, IPsiModule module)
         {
             
             // We generate the property. The underlying class will ensure that it is given a good name
             if (info.UsePartial)
             {
-              IPropertyDeclaration propertyDeclaration = factory.CreatePropertyDeclaration(ExpressionType, "__");
-              propertyDeclaration.SetAccessRights(AccessRights.PUBLIC);
-              IAccessorDeclaration accessorDeclaration1 = factory.CreateAccessorDeclaration(AccessorKind.GETTER, false);
-              IAccessorDeclaration accessorDeclaration2 = factory.CreateAccessorDeclaration(AccessorKind.SETTER, false);
-              propertyDeclaration.AddAccessorDeclarationAfter(accessorDeclaration1, null);
-              propertyDeclaration.AddAccessorDeclarationBefore(accessorDeclaration2, null);
-              propertyDeclaration.SetStatic(IsStatic);
-              propertyDeclaration.SetPartial(true);
-
-              propertyDeclaration.DecorateWithObservablePropertyAttribute(factory);
-              
+              var propertyDeclaration = factory.CreateObservableProperty(null, info.ExpressionType);
               return propertyDeclaration;  
             }
             else
