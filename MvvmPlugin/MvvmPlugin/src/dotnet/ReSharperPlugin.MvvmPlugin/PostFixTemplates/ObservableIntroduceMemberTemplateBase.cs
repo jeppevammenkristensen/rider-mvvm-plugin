@@ -262,6 +262,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
                 MacroCallExpressionNew callExpressionNew = new MacroCallExpressionNew(new MvvmCapitalizeMacroDef());
                 callExpressionNew.AddParameter(new VariableMacroParameter("Field"));
                 
+                
                 // Create a hotspot for the field declarations name using suggested member names
                 HotspotInfo fieldInfo =
                     new HotspotInfo(templateField: new TemplateField("Field",
@@ -269,9 +270,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
                 
                 // And a hotspot for where the property is set in the constructor
                 // Someproperty = "Hello"
-                HotspotInfo propertyDeclarationInfo = new HotspotInfo(templateField: new TemplateField("Property",
-                        callExpressionNew,
-                        0),
+                HotspotInfo propertyDeclarationInfo = new HotspotInfo(templateField: new TemplateField("Property", callExpressionNew, 0),
                     destination.NameIdentifier.GetDocumentRange()
                 );
                 

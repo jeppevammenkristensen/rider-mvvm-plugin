@@ -13,7 +13,7 @@ using ReSharperPlugin.MvvmPlugin.Extensions;
 namespace ReSharperPlugin.MvvmPlugin.PostFixTemplates;
 
 
-  [PostfixTemplate("obsprop", "Generates a observable property","")]
+  [PostfixTemplate("obsprop", "Generates a observable property (CommunityToolkit).","")]
 public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemplateBase
 {
     public override string TemplateName => "obsprop";
