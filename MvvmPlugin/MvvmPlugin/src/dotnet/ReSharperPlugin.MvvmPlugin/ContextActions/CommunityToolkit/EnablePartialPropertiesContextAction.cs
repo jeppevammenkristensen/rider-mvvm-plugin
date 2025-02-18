@@ -9,6 +9,7 @@ using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
+using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.TextControl;
@@ -56,6 +57,8 @@ public class EnablePartialPropertiesContextAction(ICSharpContextActionDataProvid
     public override string Text => "Enable partial properties (CommunityToolkit)";
     public override bool IsAvailable(IUserDataHolder cache)
     {
+        
+        
         if (provider.Project?.ProjectProperties.TryGetConfiguration<CSharpProjectConfiguration>(
                 provider.Project.GetCurrentTargetFrameworkId()) is { } configuration && provider.GetSelectedTreeNode<ITreeNode>() is {} treeNode && PluginUtil.GetObservableObject(treeNode) is {} observable)
         {
