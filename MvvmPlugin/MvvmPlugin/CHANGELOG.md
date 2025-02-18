@@ -9,3 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0
 - Support added for CommunityToolkit Context Action related to class and properties
+
+## 0.2.0
+- Added additional community toolkit property generation actions
+- Added postfix to generate community toolkit property
+- Added context to help move towards partial properties in community toolkit
+

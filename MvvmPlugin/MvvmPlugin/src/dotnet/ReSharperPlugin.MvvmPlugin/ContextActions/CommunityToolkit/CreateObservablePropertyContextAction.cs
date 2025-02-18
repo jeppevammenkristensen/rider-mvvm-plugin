@@ -169,6 +169,25 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
     public override bool IsAvailable(IUserDataHolder cache)
 
     {
+        if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { } fieldDeclaration)
+        {
+            // check if the cursor is at the end of the declaration
+            var caretOffset = provider.DocumentSelection.TextRange.StartOffset;
+
+            if (caretOffset < fieldDeclaration.GetDocumentEndOffset().Offset)
+                return false;
+        }
+
+        if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is { } propertyDeclaration)
+        {
+            // check if the cursor is at the end of the declaration
+            var caretOffset = provider.DocumentSelection.TextRange.StartOffset;
+            
+            if (caretOffset < propertyDeclaration.GetDocumentEndOffset().Offset)
+                return false;
+        }
+        
+        
         if (provider.GetSelectedTreeNode<IClassLikeDeclaration>() is not { } classLikeDeclaration)
             return false;
 
