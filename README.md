@@ -24,7 +24,6 @@ Unlike the actions below it is possible to call this context action if `Communit
 
 ![image](https://github.com/user-attachments/assets/b7d4a1b7-de1d-451a-9760-2b9118483a65)
 
-
 ##### Make Field Observable
 
 When this context action is applied to a field, it will be decorated with the ObservableProperty attribute and if necesarry also ensure that the containing class is Observable and partial
@@ -42,6 +41,10 @@ Otherwise the property will be converted to a field and decorated with the Obser
 **Class and Property Context actions video:**
 
 https://github.com/user-attachments/assets/ae1f35b9-e3d1-4dc3-a15e-cb3e2fd6712f
+
+##### Create observable property
+
+This can called from inside a class an will generate an observable property. Like above it will be either a field or a partial properties
 
 ###### Enable partial properties
 
