@@ -24,6 +24,9 @@
               <li>Make Class (Context Action)</li>
               <li>Make Field Observable (Context Action)</li>
               <li>Make Property Observable (Context Action)</li>
+              <li>Create observable property (Context Action)</li>
+              <li>Enable partial properties (Context Action)</li>
+              <li>Create observable property Postfix template (obsprop)              
            </ul>           
         </li>        
     </ul>
