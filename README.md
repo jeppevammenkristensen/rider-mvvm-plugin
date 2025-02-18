@@ -1,3 +1,6 @@
+[![Rider](https://img.shields.io/jetbrains/plugin/v/RIDER_PLUGIN_ID.svg?label=Rider&colorB=0A7BBB&style=for-the-badge&logo=rider)](https://plugins.jetbrains.com/plugin/26397)
+[![ReSharper](https://img.shields.io/jetbrains/plugin/v/RESHARPER_PLUGIN_ID.svg?label=ReSharper&colorB=0A7BBB&style=for-the-badge&logo=resharper)](https://plugins.jetbrains.com/plugin/26396)
+
 This a plugin to help with some MVVM tasks. This is a "learn plugin" development project. So I can't guarantee that there won't be annoying bugs in the start of this. I do though do everything to keep them at a minimum. :) 
 
 Current overview:
