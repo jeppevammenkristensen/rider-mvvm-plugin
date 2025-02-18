@@ -14,7 +14,9 @@ From a view (for instance a Window or Page etc.) a context action is available t
 
 If the CommunityToolkit.Mvvm package is installed a range of context actions are available to assist in building the view model (focused on the Source Generator parts)
 
-#### Make Class Observable
+#### Context actions
+
+##### Make Class Observable
 
 When inside a class you can active the `Make Class Observable` context action to make the class inherit from ObservableObject and make the class partial. 
 
@@ -23,23 +25,35 @@ Unlike the actions below it is possible to call this context action if `Communit
 ![image](https://github.com/user-attachments/assets/b7d4a1b7-de1d-451a-9760-2b9118483a65)
 
 
-#### Make Field Observable
+##### Make Field Observable
 
 When this context action is applied to a field, it will be decorated with the ObservableProperty attribute and if necesarry also ensure that the containing class is Observable and partial
 
-#### Make Property Observable
+##### Make Property Observable
 
 This will take a property and make it observable. There are two scenarios: 
 
-##### New Partial Property support
+###### New Partial Property support
 If the version of CommunityToolkit.Mvvm is 8.4.0 or later and the LangVersion is set to Preview the property will be made partial and decorated with the ObservableProperty. 
 
-##### Property from field
+###### Property from field
 Otherwise the property will be converted to a field and decorated with the ObservableProperty attribute.
 
 **Class and Property Context actions video:**
 
 https://github.com/user-attachments/assets/ae1f35b9-e3d1-4dc3-a15e-cb3e2fd6712f
 
+###### Enable partial properties
+
+If version 8.4 or larger of CommunityToolkit is installed it will try to ensure that you can use partial properties instead of field. 
+**NOTE** It is also required that the dotnet version is at least 9 but that will not be updated by this operation. However a error squiggly will be displayed on all classes that implement the ObservableObject with suggestion that you should upgrade to 9
+
+##### Postfix templates
+
+##### Obsprop
+
+Inside a statement you call the obsprop to generate an observable property. Like Make Property Observable based on project settings it will create a field or a partial property. See below for an example (that also uses the Enable Partial properties context action)
+
+![Obsprop](https://github.com/user-attachments/assets/3047af10-e783-49fd-ae32-de5578c07b61)
 
 
