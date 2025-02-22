@@ -1,4 +1,5 @@
 using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.CSharp.Tree;
 
 namespace ReSharperPlugin.MvvmPlugin.Models;
 
@@ -8,6 +9,13 @@ public static class PluginUtil
     {
         return TypeFactory.CreateTypeByCLRName(
             "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
+            treeNode.GetPsiModule());
+    }
+
+    public static IDeclaredType GetRelayAttribute(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
+    {
+        return TypeFactory.CreateTypeByCLRName(
+            "CommunityToolkit.Mvvm.Input.RelayCommandAttribute",
             treeNode.GetPsiModule());
     }
 
@@ -35,5 +43,12 @@ public static class PluginUtil
             TypeClassification.UNKNOWN => null,
             _ => type
         };
+    }
+
+  public static IDeclaredType? GetNotifyCanExecuteChangedFor(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
+    {
+        return TypeFactory.CreateTypeByCLRName(
+            "CommunityToolkit.Mvvm.ComponentModel.NotifyCanExecuteChangedForAttribute",
+            treeNode.GetPsiModule());
     }
 }

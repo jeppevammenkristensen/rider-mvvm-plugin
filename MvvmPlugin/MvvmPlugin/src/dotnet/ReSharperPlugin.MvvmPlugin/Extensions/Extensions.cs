@@ -3,6 +3,8 @@ using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Settings;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
+using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.CSharp.Tree;
 using Microsoft.Build.Evaluation;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
@@ -64,5 +66,22 @@ public static class Extensions
             return char.ToUpper(fieldName[0]).ToString();
 
         return string.Concat(char.ToUpper(fieldName[0]), fieldName.Substring(1));
+    }
+
+    public static bool DoesNotHaveAttribute(this IAttributesOwnerDeclaration item, IDeclaredType attribute)
+    {
+        // If the field declaration has no Attributes we return true
+        if (!item.Attributes.Any())
+        {
+            return true;
+        }
+
+        if (item.DeclaredElement is IAttributesSet attributesSet)
+        {
+            return !attributesSet.HasAttributeInstance(attribute.GetClrName(),
+                false);    
+        }
+
+        return true;
     }
 }
