@@ -24,24 +24,23 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
-    Name = "Add bladiblah",
-    Description = "Blahili",
+        Name = "Adds NotifyCanExecute attribute ",
+    Description = "",
     GroupType = typeof(CSharpContextActions),
     Priority = 100)]
-public class CreateNotifyBlah(ICSharpContextActionDataProvider provider) : IContextAction
+public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) : IContextAction
 {
-    private List<string>? _names; 
+    // The command names to suggest
+    private List<string>? _commandNames; 
     
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
-        if (_names is null)
+        if (_commandNames is null)
             yield break;
         
-        SubmenuAnchor customAnchor = new SubmenuAnchor((IAnchor) IntentionsAnchors.ContextActionsAnchor, SubmenuBehavior.Executable);
-        
-        foreach (var name in _names)
+        foreach (var name in _commandNames)
         {
-            yield return new AddNotifyAction(provider, name).ToContextActionIntention(null);
+            yield return new AddNotifyCanExecuteAction(provider, name).ToContextActionIntention(null);
         }
     }
 
@@ -59,15 +58,15 @@ public class CreateNotifyBlah(ICSharpContextActionDataProvider provider) : ICont
                var declaredType = PluginUtil.GetNotifyCanExecuteChangedFor(classLikeDeclaration)!;
                
                var result = property.DeclaredElement.GetAttributeInstances(declaredType.GetClrName(), false);
-               var usedCommands = result.Select(x => x.PositionParameter(0).ConstantValue.StringValue!).ToJetHashSet();
+               var usedCommandsByProperty = result.Select(x => x.PositionParameter(0).ConstantValue.StringValue!).ToJetHashSet();
 
-               var properties = classLikeDeclaration
+               var availableCommands = classLikeDeclaration
                    .DeclaredElement?.Properties
                    .Where(x => x.Type.IsRelayCommand())
                    .Select(x => x.ShortName).ToJetHashSet();
 
-               _names = properties?.Except(usedCommands).ToList() ?? [];
-               return _names is { Count: > 0 };
+               _commandNames = availableCommands?.Except(usedCommandsByProperty).ToList() ?? [];
+               return _commandNames is { Count: > 0 };
            }
           
         }
@@ -75,7 +74,7 @@ public class CreateNotifyBlah(ICSharpContextActionDataProvider provider) : ICont
         return false;
     }
 
-    public class AddNotifyAction(ICSharpContextActionDataProvider provider, string name) : 
+    public class AddNotifyCanExecuteAction(ICSharpContextActionDataProvider provider, string name) : 
         ContextActionBase<IClassMemberDeclaration>
     {
 
