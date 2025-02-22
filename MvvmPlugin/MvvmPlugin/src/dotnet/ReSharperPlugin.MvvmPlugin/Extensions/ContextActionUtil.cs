@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Properties;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
+using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
@@ -137,12 +140,58 @@ public static class ContextActionUtil
     
     public static void DecorateWithObservablePropertyAttribute(this ICSharpTypeMemberDeclaration typeDeclaration, CSharpElementFactory factory)
     {
-        var observableProperty = TypeFactory.CreateTypeByCLRName(
-            "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute",
-            typeDeclaration.GetPsiModule());
+        var observableProperty = PluginUtil.GetObservablePropertyAttribute(typeDeclaration);
         
         var before = typeDeclaration.AddAttributeBefore(factory.CreateAttribute(observableProperty!.GetTypeElement()!), null);
         before.AddLineBreakAfter();
+    }
+
+    public static void DecorateWithRelayPropertyAttribute(this ICSharpTypeMemberDeclaration item, string? canExecuteName,
+        CSharpElementFactory factory)
+    {
+       var relayAttribute = PluginUtil.GetRelayAttribute(item);
+       var attr = factory.CreateAttribute(relayAttribute!.GetTypeElement()!);
+       if (!string.IsNullOrWhiteSpace(canExecuteName))
+       {
+           attr.AddPropertyAssignmentAfter(factory.CreatePropertyAssignment("CanExecute", factory.CreateExpression($"nameof({canExecuteName})")), null);
+       }
+       
+       item.AddAttributeBefore(attr, null);
+
+    }
+
+    public static bool IsRelayCommand(this IType type)
+    {
+        if (type is IDeclaredType declaredType)
+        {
+            var asyncRelay = new ClrTypeName("CommunityToolkit.Mvvm.Input.IAsyncRelayCommand");
+            var relay = new ClrTypeName("CommunityToolkit.Mvvm.Input.IRelayCommand");
+
+
+            if (declaredType.GetClrName().Equals(asyncRelay) || declaredType.GetClrName().Equals(relay))
+            {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    public static bool IsValidObservableObject(this ICSharpContextActionDataProvider provider, IClassLikeDeclaration classLikeDeclaration, IDeclaredType? observableObject)
+    {
+        observableObject ??= PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown();
+        if (observableObject is null)
+        {
+            return false;
+        }
+
+        if (classLikeDeclaration.DeclaredElement?.IsDescendantOf(observableObject.GetTypeElement()) == true)
+        {
+            return true;
+        }
+
+        return false;
     }
     
     /// <summary>

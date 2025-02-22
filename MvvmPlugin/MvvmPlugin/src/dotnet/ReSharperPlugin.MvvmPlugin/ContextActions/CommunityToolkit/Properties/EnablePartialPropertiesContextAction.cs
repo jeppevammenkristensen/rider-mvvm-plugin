@@ -9,14 +9,13 @@ using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
-using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Models;
 
-namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
+namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
     Name = "Enable partial properties (CommunityToolkit)",
@@ -57,10 +56,8 @@ public class EnablePartialPropertiesContextAction(ICSharpContextActionDataProvid
     public override string Text => "Enable partial properties (CommunityToolkit)";
     public override bool IsAvailable(IUserDataHolder cache)
     {
-        
-        
         if (provider.Project?.ProjectProperties.TryGetConfiguration<CSharpProjectConfiguration>(
-                provider.Project.GetCurrentTargetFrameworkId()) is { } configuration && provider.GetSelectedTreeNode<ITreeNode>() is {} treeNode && PluginUtil.GetObservableObject(treeNode) is {} observable)
+              provider.Project.GetCurrentTargetFrameworkId()) is { } configuration && provider.GetSelectedTreeNode<ITreeNode>() is {} treeNode && PluginUtil.GetObservableObject(treeNode) is {} observable)
         {
             // If a version of the CommunityToolkit is 8.4 or larger and the language version is not Preview we return true
             if (observable is { Assembly.Version: {} version} && observable.Assembly.Version >= new Version(8, 4) && configuration.LanguageVersion < CSharpLanguageVersion.Preview)

@@ -2,12 +2,8 @@ using System;
 using System.Linq;
 using System.Text;
 using JetBrains.Application.Progress;
-using JetBrains.DocumentManagers.Transactions;
 using JetBrains.DocumentModel;
-using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
-using JetBrains.ProjectModel.SolutionStructure.SolutionDefinitions.Xml;
-using JetBrains.ReSharper.Feature.Services;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Hotspots;
@@ -15,26 +11,18 @@ using JetBrains.ReSharper.Feature.Services.LiveTemplates.LiveTemplates;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros.Implementations;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
-using JetBrains.ReSharper.Intentions.QuickFixes;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
-using JetBrains.ReSharper.Psi.CSharp.Impl;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
-using JetBrains.ReSharper.Psi.Html.Impl.Tree;
-using JetBrains.ReSharper.Psi.Impl.CodeStyle;
-using JetBrains.ReSharper.Psi.Naming.Extentions;
-using JetBrains.ReSharper.Psi.Naming.Impl;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Resources.Shell;
-using JetBrains.Serialization;
 using JetBrains.TextControl;
 using JetBrains.Threading;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
-namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
+namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
     Name = "Add observable property (CommunityToolkit)",

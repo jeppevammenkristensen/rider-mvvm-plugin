@@ -18,7 +18,7 @@ using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
-namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
+namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
     Name = "Make property observable (CommunityTookit)",

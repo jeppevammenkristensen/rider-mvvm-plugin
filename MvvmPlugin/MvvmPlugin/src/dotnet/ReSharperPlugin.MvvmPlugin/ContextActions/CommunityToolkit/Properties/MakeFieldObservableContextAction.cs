@@ -4,7 +4,6 @@ using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Resources.Shell;
@@ -13,7 +12,7 @@ using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
-namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
+namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
     Name = "Make field observable (CommunityToolkit)",
@@ -33,8 +32,7 @@ public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider p
             if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject: null, false))
                 return null;
             
-            var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
-            fieldDeclaration!.DecorateWithObservablePropertyAttribute(factory);
+            fieldDeclaration!.DecorateWithObservablePropertyAttribute(provider.ElementFactory);
             return null;
         }
     }
