@@ -41,11 +41,11 @@ If the version of CommunityToolkit.Mvvm is 8.4.0 or later and the LangVersion is
 ###### Property from field
 Otherwise the property will be converted to a field and decorated with the ObservableProperty attribute.
 
-**Class and Property Context actions video:**
+###### Class and Property Context actions video#
 
 https://github.com/user-attachments/assets/ae1f35b9-e3d1-4dc3-a15e-cb3e2fd6712f
 
-##### Create observable property
+###### Create observable property
 
 This can called from inside a class an will generate an observable property. Like above it will be either a field or a partial properties
 
@@ -54,9 +54,28 @@ This can called from inside a class an will generate an observable property. Lik
 If version 8.4 or larger of CommunityToolkit is installed it will try to ensure that you can use partial properties instead of field. 
 **NOTE** It is also required that the dotnet version is at least 9 but that will not be updated by this operation. However a error squiggly will be displayed on all classes that implement the ObservableObject with suggestion that you should upgrade to 9
 
+###### Create Relay
+
+This can be called on void method or a method returning Task that zero or one parameter. It will decorate the method with the `RelayCommand` attribute and create a CanExecute method to handle CanExecute scenarios.
+
+![Relay](https://github.com/user-attachments/assets/b00cc156-3117-45cb-86d0-c252352e1cd8)
+
+###### Add NotifyCanExecuteChangedFor 
+
+This can be called on any observable property if one or more Relay commands are available
+
+![NotifyCanExecuteChangedFor](https://github.com/user-attachments/assets/b9e3f6f5-3255-44f2-9455-05ecd3640e56)
+
+###### Add NotifyPropertyChangedFor
+
+This can be called on any observable property and will generate a context action for all valid properties
+
+![NotifyPropertyChangedFor](https://github.com/user-attachments/assets/86dddfbb-8836-4ade-a4e2-adaf6757381e)
+
+
 ##### Postfix templates
 
-##### Obsprop
+###### Obsprop
 
 Inside a statement you call the obsprop to generate an observable property. Like Make Property Observable based on project settings it will create a field or a partial property. See below for an example (that also uses the Enable Partial properties context action)
 
