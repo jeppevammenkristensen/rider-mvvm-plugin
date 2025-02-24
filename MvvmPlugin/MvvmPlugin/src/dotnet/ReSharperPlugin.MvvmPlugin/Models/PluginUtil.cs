@@ -1,5 +1,8 @@
+using JetBrains.Metadata.Reader.API;
+using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.Util;
 
 namespace ReSharperPlugin.MvvmPlugin.Models;
 
@@ -12,12 +15,7 @@ public static class PluginUtil
             treeNode.GetPsiModule());
     }
 
-    public static IDeclaredType GetRelayAttribute(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
-    {
-        return TypeFactory.CreateTypeByCLRName(
-            "CommunityToolkit.Mvvm.Input.RelayCommandAttribute",
-            treeNode.GetPsiModule());
-    }
+   
 
     /// <summary>
     /// Gets the <see cref="IDeclaredType"/> for a community toolkit ObservableObject
@@ -45,10 +43,27 @@ public static class PluginUtil
         };
     }
 
-  public static IDeclaredType? GetNotifyCanExecuteChangedFor(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
+    public static IDeclaredType? GetNotifyCanExecuteChangedFor(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
     {
         return TypeFactory.CreateTypeByCLRName(
             "CommunityToolkit.Mvvm.ComponentModel.NotifyCanExecuteChangedForAttribute",
             treeNode.GetPsiModule());
+    }
+
+    public static IDeclaredType GetNotifyPropertyChangedFor(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
+    {
+        return TypeFactory.CreateTypeByCLRName("CommunityToolkit.Mvvm.ComponentModel.NotifyPropertyChangedForAttribute",
+            treeNode.GetPsiModule());
+    }
+
+    public static string? GetReference(this IProperty property)
+    {
+        if (property.GetAttributeInstances(TypeConstants.RelayCommandAttribute.GetClrName(), AttributesSource.All)
+                .SingleItem(null) is { } single)
+        {
+            return single.NamedParameter("CanExecute").ConstantValue.StringValue;
+        }
+
+        return null;
     }
 }

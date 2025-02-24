@@ -9,7 +9,6 @@ using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Intentions;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Impl.CodeStyle;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
@@ -18,22 +17,21 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
-    Name = "Add NotifyCanExecute attribute",
-    Description = "Add NotifyCanExecute attribute to the selected property or field.",
+    Name = "Add NotifyPropertyChangedFor attribute",
+    Description = "Some description",
     GroupType = typeof(CSharpContextActions))]
-public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) : IContextAction
+public class CreateNotifyPropertyChangedForContextAction(ICSharpContextActionDataProvider provider) : IContextAction
 {
-    // The command names to suggest
-    private List<string>? _commandNames; 
+    private List<string>? _propertyNames = null;
     
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
-        if (_commandNames is null)
+        if (_propertyNames is null)
             yield break;
         
-        foreach (var name in _commandNames)
+        foreach (var name in _propertyNames)
         {
-            yield return new AddNotifyCanExecuteAction(provider, name).ToContextActionIntention(null);
+            yield return new AddNotifyPropertyChangedForAction(provider, name).ToContextActionIntention(null);
         }
     }
 
@@ -43,7 +41,7 @@ public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) :
         {
             return CheckCanExecute(property);
         }
-
+        
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is {DeclaredElement: { }} field)
         {
             return CheckCanExecute(field);
@@ -51,38 +49,45 @@ public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) :
 
         return false;
     }
-
-    private bool CheckCanExecute(IClassMemberDeclaration property)
+    
+    private bool CheckCanExecute(IClassMemberDeclaration member)
     {
-        if (property.GetContainingTypeDeclaration() is IClassLikeDeclaration classLikeDeclaration && PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown() is {} observableObject)
+        if (member.GetContainingTypeDeclaration() is IClassLikeDeclaration classLikeDeclaration && PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown() is {} observableObject)
         {
             if (!provider.IsValidObservableObject(classLikeDeclaration, observableObject))
             {
                 return true;
             }
 
-            var declaredType = PluginUtil.GetNotifyCanExecuteChangedFor(classLikeDeclaration)!;
+            var declaredType = PluginUtil.GetNotifyPropertyChangedFor(classLikeDeclaration)!;
                
-            var result = property.DeclaredElement.GetAttributeInstances(declaredType.GetClrName(), false);
-            var usedCommandsByProperty = result.Select(x => x.PositionParameter(0).ConstantValue.StringValue!).ToJetHashSet();
+            var result = member.DeclaredElement!.GetAttributeInstances(declaredType.GetClrName(), false);
+            var usedNotifyProperties = result.Select(x => x.PositionParameter(0).ConstantValue.StringValue!).ToJetHashSet();
 
-            var availableCommands = classLikeDeclaration
+            if (member.GetPropertyName() is not { } propertyName)
+            {
+                return false;
+            }
+
+            usedNotifyProperties.Add(propertyName);
+            
+            var allProperties = classLikeDeclaration
                 .DeclaredElement?.Properties
-                .Where(x => x.Type.IsRelayCommand())
+                .Where(x => x.Type.IsRelayCommand() == false)
                 .Select(x => x.ShortName).ToJetHashSet();
 
-            _commandNames = availableCommands?.Except(usedCommandsByProperty).ToList() ?? [];
+            _propertyNames = allProperties?.Except(usedNotifyProperties).ToList() ?? [];
             return true;
         }
 
         return false;
     }
-
-    public class AddNotifyCanExecuteAction(ICSharpContextActionDataProvider provider, string name) : 
+    
+    public class AddNotifyPropertyChangedForAction(ICSharpContextActionDataProvider provider, string name) : 
         ContextActionBase<IClassMemberDeclaration>
     {
 
-        public override string Text => $"Generate NotifyCanExecuteFor for {name} (CommunityToolkit)";
+        public override string Text => $"Generate NotifyPropertyChangedFor for {name} (CommunityToolkit)";
         protected override IClassMemberDeclaration? TryCreateInfoFromDataProvider(IUserDataHolder cache)
         {
             return provider.GetSelectedElement<IClassMemberDeclaration>();
@@ -93,11 +98,11 @@ public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) :
             return true;
         }
 
-        protected override Action<ITextControl> ExecutePsiTransaction(IClassMemberDeclaration availabilityInfo, ISolution solution,
+        protected override Action<ITextControl>? ExecutePsiTransaction(IClassMemberDeclaration availabilityInfo, ISolution solution,
             IProgressIndicator progress)
         {
-            var notifyCanExecuteChangedFor = PluginUtil.GetNotifyCanExecuteChangedFor(availabilityInfo);
-            var attribute = provider.ElementFactory.CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement());
+            var notifyCanExecuteChangedFor = PluginUtil.GetNotifyPropertyChangedFor(availabilityInfo);
+            var attribute = provider.ElementFactory.CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement()!);
             attribute.AddArgumentAfter(provider.ElementFactory.CreateArgument(ParameterKind.VALUE,
                 provider.ElementFactory.CreateExpression($"nameof({name})")), null);
             
