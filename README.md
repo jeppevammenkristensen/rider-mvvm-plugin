@@ -58,19 +58,19 @@ If version 8.4 or larger of CommunityToolkit is installed it will try to ensure 
 
 This can be called on void method or a method returning Task that zero or one parameter. It will decorate the method with the `RelayCommand` attribute and create a CanExecute method to handle CanExecute scenarios.
 
-![Relay](https://github.com/user-attachments/assets/b00cc156-3117-45cb-86d0-c252352e1cd8)
+![Relay](https://github.com/user-attachments/assets/668adb9b-1d21-4f34-9114-e009f0b6ee03)
 
 ###### Add NotifyCanExecuteChangedFor 
 
 This can be called on any observable property if one or more Relay commands are available
 
-![NotifyCanExecuteChangedFor](https://github.com/user-attachments/assets/b9e3f6f5-3255-44f2-9455-05ecd3640e56)
+![NotifyCanExecuteChangedFor](https://github.com/user-attachments/assets/74c91371-09ee-4211-a142-4071fdf30569)
 
 ###### Add NotifyPropertyChangedFor
 
 This can be called on any observable property and will generate a context action for all valid properties
 
-![NotifyPropertyChangedFor](https://github.com/user-attachments/assets/86dddfbb-8836-4ade-a4e2-adaf6757381e)
+![NotifyPropertyChangedFor](https://github.com/user-attachments/assets/edc0a2e8-f26c-4156-8f00-1a996e6c27fc)
 
 
 ##### Postfix templates
