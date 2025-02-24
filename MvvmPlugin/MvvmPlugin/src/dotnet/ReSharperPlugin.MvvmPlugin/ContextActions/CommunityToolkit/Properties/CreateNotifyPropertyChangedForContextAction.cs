@@ -58,6 +58,15 @@ public class CreateNotifyPropertyChangedForContextAction(ICSharpContextActionDat
             {
                 return true;
             }
+            
+            if (member.DeclaredElement is null)
+                return false;
+            
+            if (!member.DeclaredElement.HasAttributeInstance(TypeConstants.ObservableProperty.GetClrName(),
+                    AttributesSource.All))
+            {
+                return false;
+            }
 
             var declaredType = PluginUtil.GetNotifyPropertyChangedFor(classLikeDeclaration)!;
                

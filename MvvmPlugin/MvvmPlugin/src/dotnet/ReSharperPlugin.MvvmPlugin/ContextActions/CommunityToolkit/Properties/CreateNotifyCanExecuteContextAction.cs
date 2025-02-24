@@ -21,7 +21,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Name = "Add NotifyCanExecute attribute",
     Description = "Add NotifyCanExecute attribute to the selected property or field.",
     GroupType = typeof(CSharpContextActions))]
-public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) : IContextAction
+public class CreateNotifyCanExecuteContextActionf(ICSharpContextActionDataProvider provider) : IContextAction
 {
     // The command names to suggest
     private List<string>? myCommandNames; 
@@ -56,6 +56,16 @@ public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) :
     {
         if (property.GetContainingTypeDeclaration() is IClassLikeDeclaration classLikeDeclaration && PluginUtil.GetObservableObject(classLikeDeclaration).ShouldBeKnown() is {} observableObject)
         {
+            if (property.DeclaredElement is null)
+                return false;
+
+            if (!property.DeclaredElement.HasAttributeInstance(TypeConstants.ObservableProperty.GetClrName(),
+                    AttributesSource.All))
+            {
+                return false;
+            }
+            
+            
             if (!provider.IsValidObservableObject(classLikeDeclaration, observableObject))
             {
                 return true;

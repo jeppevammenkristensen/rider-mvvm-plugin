@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Metadata.Reader.API;
 using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Tree;
@@ -17,6 +18,7 @@ public static class PluginConstants
 
 public static class TypeConstants
 {
+    public static readonly ClrTypeNameWrapper ObservableProperty = "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute";
     public static readonly ClrTypeNameWrapper AsyncRelayCommand = "CommunityToolkit.Mvvm.Input.IAsyncRelayCommand";
     public static readonly ClrTypeNameWrapper RelayCommand = "CommunityToolkit.Mvvm.Input.IRelayCommand";
 
