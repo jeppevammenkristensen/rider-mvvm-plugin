@@ -9,26 +9,30 @@
    <extensions defaultExtensionNs="com.intellij">
      <defaultLiveTemplates file="/liveTemplates/Mvvm.xml"/>
    </extensions>
-  
 
 
    <description>
 <![CDATA[
-  <p>Provides different helpers to assist with developing a .NET based MVVM solution:</p>
+   <p>
+      Provides different helpers to assist with developing a .NET based MVVM
+      solution:
+    </p>
     <ul>
-        <li>Create ViewModel from within a XAML view (Context Action)
-        </li>
-        <li>
-           Community Toolkit assistance:
-           <ul>
-              <li>Make Class (Context Action)</li>
-              <li>Make Field Observable (Context Action)</li>
-              <li>Make Property Observable (Context Action)</li>
-              <li>Create observable property (Context Action)</li>
-              <li>Enable partial properties (Context Action)</li>
-              <li>Create observable property Postfix template (obsprop)              
-           </ul>           
-        </li>        
+      <li>Create ViewModel from within a XAML view (Context Action)</li>
+      <li>
+        Community Toolkit assistance:
+        <ul>
+          <li>Make Class (Context Action)</li>
+          <li>Make Field Observable (Context Action)</li>
+          <li>Make Property Observable (Context Action)</li>
+          <li>Create observable property (Context Action)</li>
+          <li>Enable partial properties (Context Action)</li>
+          <li>Make method relay (Context Action)</li>
+          <li>Add NotifyPropertyChangedFor (Context Action)</li>
+          <li>Add NotifyCanExecuteChangedFor (Context Action)</li>
+          <li>Create observable property Postfix template (obsprop)</li>
+        </ul>
+      </li>
     </ul>
 ]]>
   </description>
