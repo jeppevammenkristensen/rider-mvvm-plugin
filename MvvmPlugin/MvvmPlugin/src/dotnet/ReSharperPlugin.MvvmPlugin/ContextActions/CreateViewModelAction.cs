@@ -49,11 +49,11 @@ public class CreateViewModelAction : ContextActionBase
 {
     
     private static Regex _matchViewRegex = new Regex("View$", RegexOptions.IgnoreCase);
-    private readonly XamlContextActionDataProvider _provider;
+    private readonly XamlContextActionDataProvider myProvider;
 
     public CreateViewModelAction(XamlContextActionDataProvider provider)
     {
-        _provider = provider;
+        myProvider = provider;
     }
     
     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
@@ -63,7 +63,7 @@ public class CreateViewModelAction : ContextActionBase
         //     return null; 
         
         // Get the selected XAML file
-        var xamlFile = _provider.GetSelectedTreeNode<IXamlFile>();
+        var xamlFile = myProvider.GetSelectedTreeNode<IXamlFile>();
         if (xamlFile == null)
             return null;
 
@@ -250,7 +250,7 @@ public class CreateViewModelAction : ContextActionBase
     public override string Text => "Create viewmodel";
     public override bool IsAvailable(IUserDataHolder cache)
     {
-        if (_provider.GetSelectedTreeNode<IXamlFile>() is { } node)
+        if (myProvider.GetSelectedTreeNode<IXamlFile>() is { } node)
         {
             var rootType = node.GetTypeDeclarations().FirstOrDefault();
             if (rootType == null)

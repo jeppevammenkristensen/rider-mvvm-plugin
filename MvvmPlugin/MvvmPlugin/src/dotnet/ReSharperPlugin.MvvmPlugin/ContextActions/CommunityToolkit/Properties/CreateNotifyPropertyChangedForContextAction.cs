@@ -22,14 +22,14 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     GroupType = typeof(CSharpContextActions))]
 public class CreateNotifyPropertyChangedForContextAction(ICSharpContextActionDataProvider provider) : IContextAction
 {
-    private List<string>? _propertyNames = null;
+    private List<string>? myPropertyNames = null;
     
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
-        if (_propertyNames is null)
+        if (myPropertyNames is null)
             yield break;
         
-        foreach (var name in _propertyNames)
+        foreach (var name in myPropertyNames)
         {
             yield return new AddNotifyPropertyChangedForAction(provider, name).ToContextActionIntention(null);
         }
@@ -76,7 +76,7 @@ public class CreateNotifyPropertyChangedForContextAction(ICSharpContextActionDat
                 .Where(x => x.Type.IsRelayCommand() == false)
                 .Select(x => x.ShortName).ToJetHashSet();
 
-            _propertyNames = allProperties?.Except(usedNotifyProperties).ToList() ?? [];
+            myPropertyNames = allProperties?.Except(usedNotifyProperties).ToList() ?? [];
             return true;
         }
 

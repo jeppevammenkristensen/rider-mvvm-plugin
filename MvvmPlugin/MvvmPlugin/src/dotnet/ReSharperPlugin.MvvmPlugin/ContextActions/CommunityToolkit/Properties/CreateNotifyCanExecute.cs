@@ -24,14 +24,14 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) : IContextAction
 {
     // The command names to suggest
-    private List<string>? _commandNames; 
+    private List<string>? myCommandNames; 
     
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
-        if (_commandNames is null)
+        if (myCommandNames is null)
             yield break;
         
-        foreach (var name in _commandNames)
+        foreach (var name in myCommandNames)
         {
             yield return new AddNotifyCanExecuteAction(provider, name).ToContextActionIntention(null);
         }
@@ -71,7 +71,7 @@ public class CreateNotifyCanExecute(ICSharpContextActionDataProvider provider) :
                 .Where(x => x.Type.IsRelayCommand())
                 .Select(x => x.ShortName).ToJetHashSet();
 
-            _commandNames = availableCommands?.Except(usedCommandsByProperty).ToList() ?? [];
+            myCommandNames = availableCommands?.Except(usedCommandsByProperty).ToList() ?? [];
             return true;
         }
 

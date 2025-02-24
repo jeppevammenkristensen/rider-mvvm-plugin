@@ -17,8 +17,8 @@ public static class PluginConstants
 
 public static class TypeConstants
 {
-    public static readonly ClrTypeNameWrapper IAsyncRelayCommand = "CommunityToolkit.Mvvm.Input.IAsyncRelayCommand";
-    public static readonly ClrTypeNameWrapper IRelayCommand = "CommunityToolkit.Mvvm.Input.IRelayCommand";
+    public static readonly ClrTypeNameWrapper AsyncRelayCommand = "CommunityToolkit.Mvvm.Input.IAsyncRelayCommand";
+    public static readonly ClrTypeNameWrapper RelayCommand = "CommunityToolkit.Mvvm.Input.IRelayCommand";
 
     public static readonly ClrTypeNameWrapper RelayCommandAttribute =
         "CommunityToolkit.Mvvm.Input.RelayCommandAttribute";

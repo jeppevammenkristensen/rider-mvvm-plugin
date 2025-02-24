@@ -196,8 +196,8 @@ public static class ContextActionUtil
 
             ClrTypeNameWrapper[] types =
             [
-                TypeConstants.IRelayCommand, TypeConstants.IRelayCommand.GenericOneType(),
-                TypeConstants.IAsyncRelayCommand, TypeConstants.IAsyncRelayCommand.GenericOneType()
+                TypeConstants.RelayCommand, TypeConstants.RelayCommand.GenericOneType(),
+                TypeConstants.AsyncRelayCommand, TypeConstants.AsyncRelayCommand.GenericOneType()
             ];
             
             if (types.Any(x => x.GetClrName().Equals(declaredType.GetClrName()))) 

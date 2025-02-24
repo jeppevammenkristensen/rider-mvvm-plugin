@@ -21,16 +21,16 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
     GroupType = typeof(CSharpContextActions))]
 public class MakeObservableContextAction : ContextActionBase
 {
-    private readonly ICSharpContextActionDataProvider _provider;
+    private readonly ICSharpContextActionDataProvider myProvider;
 
     public MakeObservableContextAction(ICSharpContextActionDataProvider provider)
     {
-        _provider = provider;
+        myProvider = provider;
     }
     
     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
-        if (_provider.GetSelectedTreeNode<IClassDeclaration>() is not { } classLikeDeclaration)
+        if (myProvider.GetSelectedTreeNode<IClassDeclaration>() is not { } classLikeDeclaration)
             return null;
         
         using (WriteLockCookie.Create())
@@ -60,7 +60,7 @@ public class MakeObservableContextAction : ContextActionBase
     {
         FieldDeclaration = null;
         
-        if (_provider.GetSelectedTreeNode<IClassDeclaration>() is { } classLikeDeclaration)
+        if (myProvider.GetSelectedTreeNode<IClassDeclaration>() is { } classLikeDeclaration)
         {
             // Check if the containing class implements the ObservableObject in some way or another
 
