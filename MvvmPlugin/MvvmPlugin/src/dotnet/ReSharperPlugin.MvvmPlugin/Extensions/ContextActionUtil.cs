@@ -149,8 +149,8 @@ public static class ContextActionUtil
     public static void DecorateWithRelayPropertyAttribute(this ICSharpTypeMemberDeclaration item, string? canExecuteName,
         CSharpElementFactory factory)
     {
-       var relayAttribute = PluginUtil.GetRelayAttribute(item);
-       var attr = factory.CreateAttribute(relayAttribute!.GetTypeElement()!);
+       var relayAttribute = TypeConstants.RelayCommandAttribute;
+       var attr = factory.CreateAttribute(relayAttribute.GetDeclaredType(item).GetTypeElement()!);
        if (!string.IsNullOrWhiteSpace(canExecuteName))
        {
            attr.AddPropertyAssignmentAfter(factory.CreatePropertyAssignment("CanExecute", factory.CreateExpression($"nameof({canExecuteName})")), null);
@@ -160,15 +160,47 @@ public static class ContextActionUtil
 
     }
 
+    /// <summary>
+    ///  Gets the property name for the declaration. If it's a field decorated with the
+    /// ObservableProperty attribute the generated name will be returned
+    /// </summary>
+    /// <param name="declaration"></param>
+    /// <returns></returns>
+    public static string? GetPropertyName(this IClassMemberDeclaration declaration)
+    {
+        if (declaration is IPropertyDeclaration propertyDeclaration)
+        {
+            return propertyDeclaration.NameIdentifier.Name;
+        }
+
+        if (declaration is IFieldDeclaration fieldDeclaration)
+        {
+            if (fieldDeclaration.DeclaredElement is { } declaredElement)
+            {
+                if (declaredElement.HasAttributeInstance(PluginUtil.GetObservableObject(declaration).GetClrName(),
+                        false))
+                {
+                    return fieldDeclaration.NameIdentifier.Name.ToPropertyName();
+                }
+            }
+        }
+
+        return null;
+    }
+
     public static bool IsRelayCommand(this IType type)
     {
         if (type is IDeclaredType declaredType)
         {
-            var asyncRelay = new ClrTypeName("CommunityToolkit.Mvvm.Input.IAsyncRelayCommand");
-            var relay = new ClrTypeName("CommunityToolkit.Mvvm.Input.IRelayCommand");
 
 
-            if (declaredType.GetClrName().Equals(asyncRelay) || declaredType.GetClrName().Equals(relay))
+            ClrTypeNameWrapper[] types =
+            [
+                TypeConstants.IRelayCommand, TypeConstants.IRelayCommand.GenericOneType(),
+                TypeConstants.IAsyncRelayCommand, TypeConstants.IAsyncRelayCommand.GenericOneType()
+            ];
+            
+            if (types.Any(x => x.GetClrName().Equals(declaredType.GetClrName()))) 
             {
                 return true;
             }

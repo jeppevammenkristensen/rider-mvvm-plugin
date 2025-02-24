@@ -103,7 +103,7 @@ public class CreateRelayContextAction(ICSharpContextActionDataProvider provider)
             provider.GetSelectedTreeNode<IClassLikeDeclaration>() is
             {
             } classLikeDeclaration
-            && PluginUtil.GetRelayAttribute(classLikeDeclaration).ShouldBeKnown() is { } relayAttribute)
+            && TypeConstants.RelayCommandAttribute.GetDeclaredType(classLikeDeclaration).ShouldBeKnown() is { } relayAttribute)
         {
             return (true, methodDeclaration, classLikeDeclaration, relayAttribute);
         }
