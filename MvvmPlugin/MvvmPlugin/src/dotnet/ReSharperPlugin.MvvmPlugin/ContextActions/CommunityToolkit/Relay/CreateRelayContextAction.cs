@@ -62,9 +62,6 @@ public class CreateRelayContextAction(ICSharpContextActionDataProvider provider)
             // TODO: At some stage we need to check if the method is public and if not called directly make it private
         }
         
-        
-        
-        
         return null;
     }
     

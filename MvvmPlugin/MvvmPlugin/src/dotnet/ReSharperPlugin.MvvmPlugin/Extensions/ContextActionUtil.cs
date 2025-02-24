@@ -177,7 +177,9 @@ public static class ContextActionUtil
         {
             if (fieldDeclaration.DeclaredElement is { } declaredElement)
             {
-                if (declaredElement.HasAttributeInstance(PluginUtil.GetObservableObject(declaration).GetClrName(),
+                var observablePropertyTypeName = TypeConstants.ObservableProperty.GetClrName();
+
+                if (declaredElement.HasAttributeInstance(observablePropertyTypeName,
                         false))
                 {
                     return fieldDeclaration.NameIdentifier.Name.ToPropertyName();
@@ -192,8 +194,6 @@ public static class ContextActionUtil
     {
         if (type is IDeclaredType declaredType)
         {
-
-
             ClrTypeNameWrapper[] types =
             [
                 TypeConstants.RelayCommand, TypeConstants.RelayCommand.GenericOneType(),
