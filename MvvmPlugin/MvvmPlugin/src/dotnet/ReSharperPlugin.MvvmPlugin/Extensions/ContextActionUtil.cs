@@ -97,7 +97,7 @@ public static class ContextActionUtil
     /// <param name="propertyName"></param>
     /// <param name="propertyType"></param>
     /// <returns></returns>
-    public static IPropertyDeclaration CreateObservableProperty(this CSharpElementFactory factory, string? propertyName = null, IType? propertyType = null)
+    public static IPropertyDeclaration CreateObservableProperty(this CSharpElementFactory factory, string? propertyName = null, IType? propertyType = null, bool generateObservableAttribute = true)
     {
         IPropertyDeclaration propertyDeclaration;
         if (propertyType is null)
@@ -118,7 +118,13 @@ public static class ContextActionUtil
         
         propertyDeclaration.SetPartial(true);
 
-        propertyDeclaration.DecorateWithObservablePropertyAttribute(factory);
+        // This is here for the scenario where we want to copy an existing range of attributes
+        // for instance from a field to a property
+        if (generateObservableAttribute)
+        {
+            propertyDeclaration.DecorateWithObservablePropertyAttribute(factory);    
+        }
+        
               
         return propertyDeclaration;  
     }
@@ -266,5 +272,22 @@ public static class ContextActionUtil
 
         return true;
 
+    }
+
+    public static bool ImplementsObservableObject(this IClassLikeDeclaration declaration,
+        IDeclaredType? observableObject)
+    {
+        observableObject ??= TypeConstants.ObservableObject.GetDeclaredTypeOrNull(declaration);
+        if (observableObject is null)
+        {
+            return false;
+        }
+
+        if (declaration.DeclaredElement?.IsDescendantOf(observableObject.GetTypeElement()) == true)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

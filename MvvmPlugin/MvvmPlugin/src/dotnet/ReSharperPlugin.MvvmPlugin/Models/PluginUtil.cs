@@ -25,7 +25,7 @@ public static class PluginUtil
     public static IDeclaredType GetObservableObject(JetBrains.ReSharper.Psi.Tree.ITreeNode treeNode)
     {
         return TypeFactory.CreateTypeByCLRName(
-            "CommunityToolkit.Mvvm.ComponentModel.ObservableObject",
+            TypeConstants.ObservableObject.GetClrName(),
             treeNode.GetPsiModule());
     }
 

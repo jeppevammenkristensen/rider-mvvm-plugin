@@ -6,6 +6,7 @@ using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using Microsoft.Build.Evaluation;
+using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
 
@@ -68,6 +69,20 @@ public static class Extensions
         return string.Concat(char.ToUpper(fieldName[0]), fieldName.Substring(1));
     }
 
+    public static bool IsObservableProperty(this IClassMemberDeclaration declaration)
+    {
+        if (!declaration.Attributes.Any())
+            return false;
+        
+        if (declaration.DeclaredElement is IAttributesSet attributesSet)
+        {
+            return attributesSet.HasAttributeInstance(TypeConstants.ObservableProperty.GetClrName(),
+                false);    
+        }
+
+        return true; 
+    }
+    
     public static bool DoesNotHaveAttribute(this IAttributesOwnerDeclaration item, IDeclaredType attribute)
     {
         // If the field declaration has no Attributes we return true
