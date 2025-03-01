@@ -72,6 +72,18 @@ This can be called on any observable property and will generate a context action
 
 ![NotifyPropertyChangedFor](https://github.com/user-attachments/assets/edc0a2e8-f26c-4156-8f00-1a996e6c27fc)
 
+###### Convert to partial property
+
+This will take a field definition decorated with `ObservableProperty` like for instance
+
+```csharp
+[ObservableProperty]
+private string _someField;
+```
+
+And convert it to the newer partial property format if applicable (CommunityTookit.Mvvm version larger than 8.4 and preview set). 
+
+NB! This context action is scoped, so it can also be applied to the file, project or solution.
 
 ##### Postfix templates
 
