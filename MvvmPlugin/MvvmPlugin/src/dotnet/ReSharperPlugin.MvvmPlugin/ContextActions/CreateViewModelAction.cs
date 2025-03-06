@@ -35,6 +35,7 @@ using JetBrains.ReSharper.Psi.Xaml.Tree;
 using JetBrains.ReSharper.Psi.Xml.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
+using JetBrains.Threading;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
@@ -74,6 +75,8 @@ public class CreateViewModelAction : ContextActionBase
         var viewName = $"{_matchViewRegex.Replace(name, string.Empty)}ViewModel";
 
         var project = xamlFile.GetProject();
+        if (project == null)
+            return null;
 
         using (ReadLockCookie.Create())
         {
@@ -253,34 +256,27 @@ public class CreateViewModelAction : ContextActionBase
         if (myProvider.GetSelectedTreeNode<IXamlFile>() is { } node)
         {
             var rootType = node.GetTypeDeclarations().FirstOrDefault();
+
+            Kind = rootType.GetDesktopKind();
             if (rootType == null)
                 return false;
 
             if (rootType.Type.GetTypeElement()?.ShortName == "Application")
                 return false;
 
-            if (rootType.NamespaceAliases.FirstOrDefault(x => x.XmlName == "xmlns")?.UnquotedValue is { } xmlns)
+            if (Kind == DesktopKind.Avalonia)
             {
-                // if xmlns matches the wpf spec check if the d:DataContext attribute is set
-                // if not set the createViewModel action is available
-                
-                if (xmlns == "http://schemas.microsoft.com/winfx/2006/xaml/presentation")
-                {
-                    Kind = DesktopKind.Wpf;
-                    return !rootType.GetAttributes()
-                        .Any(x => x.XmlName == PluginConstants.DataContextName && x.XmlNamespace == "d");
-                }
-                if (xmlns == "https://github.com/avaloniaui")
-                {
-                    Kind = DesktopKind.Avalonia;
-                    return rootType.GetAttributes().All(x => x.XmlName != PluginConstants.DatatypeName);
-                }
+                return rootType.GetAttributes()
+                    .All(x => x.XmlName != PluginConstants.DatatypeName);
                 
             }
-            
-            
-            
-            
+
+            if (Kind == DesktopKind.Wpf)
+            {
+                return !rootType.GetAttributes()
+                    .Any(x => x.XmlName == PluginConstants.DataContextName && x.XmlNamespace == "d");
+            }
+
         }
 
         return false;
@@ -288,15 +284,15 @@ public class CreateViewModelAction : ContextActionBase
     
     private DesktopKind Kind { get; set; } = DesktopKind.None;
     
-    private async Task  ShowProjectFile([NotNull] ISolution solution, [NotNull] IProjectFile file, int? caretPosition)
+    private static async Task ShowProjectFile(ISolution solution, IProjectFile file,
+        int? caretPosition)
     {
         var editor = solution.GetComponent<IEditorManager>();
-        
         var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
-        
+
         if (caretPosition != null)
         {
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
-        }    
+        }
     }
 }

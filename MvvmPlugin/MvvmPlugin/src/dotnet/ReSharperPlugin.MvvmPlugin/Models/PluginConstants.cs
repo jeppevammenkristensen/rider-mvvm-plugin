@@ -12,8 +12,10 @@ public static class PluginConstants
     public const string DataContextName = "DataContext";
 
     public const string PlaceHolderName = "__";
-    
-    
+
+    public const string Xaml = "XAML";
+
+
 }
 
 public static class TypeConstants
