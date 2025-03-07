@@ -7,6 +7,7 @@ using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
@@ -81,52 +82,15 @@ public class NavigateToViewContextAction : ContextActionBase
     
     private static bool XamlFileMatchesType(IXamlFile xamlFile, string typeNamespace, string modelName)
     {
-        if (xamlFile.GetTypeDeclarations().FirstOrDefault() is { } type)
+        
+        var (type, _) = xamlFile.GetViewModelType();
+        if (type is null)
+            return false;
+
+        if (type.GetTypeElement() is { } typeElement &&
+            typeElement.GetContainingNamespace().QualifiedName == typeNamespace && typeElement.ShortName == modelName)
         {
-            var desktopKind = xamlFile.GetDesktopKind();
-
-            if (desktopKind == DesktopKind.Wpf)
-            {
-                if (type.GetAttribute(x => x is IPropertyAttribute p && p.IsDesignTimeDataContextSetter()) is
-                    IPropertyAttribute {Value.MarkupExtension : { } markup})
-                {
-                    var matchedType = markup.GetDesignDataContextType();
-                    if (matchedType.GetTypeElement() is { } typeElement)
-                    {
-                        return typeElement.GetContainingNamespace().QualifiedName == typeNamespace && typeElement.ShortName == modelName;
-                    }
-                }
-            }
-            else if (desktopKind == DesktopKind.Avalonia)
-            {
-                if (type.GetAttribute(x => x.XmlName == "DataType") is IPropertyAttribute {  Value.MarkupAttributeValue: ITypeExpression markupAttributeValue })
-                {
-                    if (markupAttributeValue.TypeName?.XmlName == modelName)
-                    {
-                        var derivedType = ReferenceUtil.GetType(markupAttributeValue);
-                        if (derivedType.GetTypeElement() is { } typeElement)
-                        {
-                            return typeElement.GetContainingNamespace().QualifiedName == typeNamespace;    
-                        }
-                        
-                    }
-                 
-                    
-                    // if (dataType.UnquotedValue.Split(':') is {Length: 2} splitData)
-                    // {
-                    //     var (nameSpace, shortName) = (splitData[0], splitData[1]);
-                    //     if (type.NamespaceAliases.FirstOrDefault(x => x.DeclaredName == nameSpace) is { } nameSpaceAlias)
-                    //     {
-                    //         if (nameSpaceAlias.UnquotedValue.Split(':') is {Length: 2} splitAlias)
-                    //         {
-                    //             return splitAlias[1] == typeNamespace && modelName == shortName;
-                    //         }
-                    //     }
-                    // }
-                }
-            }
-
-            
+            return true;
         }
 
         return false;
