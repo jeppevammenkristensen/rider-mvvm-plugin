@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.ProjectModel;
@@ -7,7 +8,9 @@ using JetBrains.ReSharper.Feature.Services.LiveTemplates.Settings;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.Files;
 using JetBrains.ReSharper.Psi.Tree;
+using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Psi.Xaml.Impl.Util;
 using JetBrains.ReSharper.Psi.Xaml.Tree;
 using JetBrains.ReSharper.Psi.Xaml.Tree.MarkupExtensions;
@@ -50,15 +53,100 @@ public static class Extensions
         return defaultValue;
     }
 
-    public static bool MatchesNamespaceAndType(this IFile file, string namespaceName, string typeName)
+    /// <summary>
+    /// Retrieves the primary C# file associated with the given type element, excluding source-generated files.
+    /// </summary>
+    /// <param name="typeElement">The type element for which the primary non-source-generated file is to be retrieved. May be null.</param>
+    /// <returns>The primary C# file (<see cref="ICSharpFile"/>) associated with the given type element, or null if the type element is null or no valid non-source-generated file is found.</returns>
+    public static ICSharpFile? GetPrimaryNonSourceGeneratedFile(this ITypeElement? typeElement)
     {
-        if (file is not IXamlFile xamlFile)
-            return false;
-        
-        return false;
-        
-        
+        if (typeElement == null)
+        {
+            return null;
+        }
+
+        return typeElement.GetSourceFiles()
+            .FirstOrDefault(x => x.IsValid() && !x.IsSourceGeneratedFile())?.GetPrimaryPsiFile() as ICSharpFile;
     }
+
+    public static (IType? type, XamlPlatform platform) GetViewModelType(this IXamlFile xamlFile)
+    {
+        var platform = XamlPlatformUtil.GetXamlNodePlatform(xamlFile);
+
+        switch (platform)
+        {
+            case XamlPlatform.NO_PLATFORM:
+            case XamlPlatform.NOT_SURE:
+            case XamlPlatform.SILVERLIGHT:
+            case XamlPlatform.WINDOWS_PHONE:
+            case XamlPlatform.WINRT:
+            case XamlPlatform.XAMARIN_FORMS:
+            case XamlPlatform.UWP:
+            case XamlPlatform.WINUI:
+            case XamlPlatform.UNO:
+            case XamlPlatform.ALL:
+                return (null, platform);
+                break;
+            case XamlPlatform.WPF:
+                return (GetViewModelTypeFromDesignDataContext(xamlFile), platform);
+            case XamlPlatform.MAUI:
+            case XamlPlatform.AVALONIA:
+                return (GetViewModelTypeFromDataType(xamlFile), platform);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+            
+    }
+
+    private static IType? GetViewModelTypeFromDesignDataContext(IXamlFile? file)
+    {
+        if (file?.GetTypeDeclarations().SingleItem is not {} typeDeclaration)
+            return null;
+
+        if (typeDeclaration.GetDesignDataContextAttribute() is {Value.MarkupExtension: { } markup})
+        {
+            return markup.GetDesignDataContextType();
+            
+        }
+        return null;
+    }
+
+    public static IPropertyAttribute? GetDesignDataContextAttribute(this IXamlTypeDeclaration? type)
+    {
+        if (type == null)
+            return null;
+
+        return type.GetAttribute(x => x is IPropertyAttribute p && p.IsDesignTimeDataContextSetter()) as
+            IPropertyAttribute;
+    }
+
+    public static IPropertyAttribute? GetDataTypePropertyAttribute(this IXamlFile xamlFile)
+    {
+        if (xamlFile.GetTypeDeclarations().FirstOrDefault() is not { } typeDeclaration)
+        {
+            return null;
+        }
+
+        if (typeDeclaration.GetAttribute("x:DataType") is IPropertyAttribute propertyAttribute)
+        {
+            return propertyAttribute;
+        }
+
+        return null;
+    }
+
+    private static IType? GetViewModelTypeFromDataType(IXamlFile xamlFile)
+    {
+        if (xamlFile.GetDataTypePropertyAttribute() is
+            {Value.MarkupAttributeValue: ITypeExpression markupAttributeValue})
+        {
+            return ReferenceUtil.GetType(markupAttributeValue);
+        }
+        
+        return null;
+    }
+    
     //
     // public static IType? GetBoundDataContextType(this IXamlTypeDeclaration? rootType, DesktopKind? desktopKind)
     // {

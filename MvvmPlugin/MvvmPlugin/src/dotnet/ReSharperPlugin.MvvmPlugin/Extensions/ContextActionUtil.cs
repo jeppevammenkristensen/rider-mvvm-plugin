@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using JetBrains.IDE;
 using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Properties;
@@ -14,6 +16,7 @@ using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
+using JetBrains.TextControl;
 using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
@@ -30,6 +33,18 @@ public static class ContextActionUtil
         }
 
         return null;
+    }
+    
+    public static async Task ShowProjectFile(ISolution solution, IProjectFile file,
+        int? caretPosition)
+    {
+        var editor = solution.GetComponent<IEditorManager>();
+        var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
+
+        if (caretPosition != null)
+        {
+            textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
+        }
     }
 
     /// <summary>

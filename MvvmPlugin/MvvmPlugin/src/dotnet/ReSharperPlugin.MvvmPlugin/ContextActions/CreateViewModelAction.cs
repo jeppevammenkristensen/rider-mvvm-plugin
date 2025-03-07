@@ -15,6 +15,7 @@ using JetBrains.ProjectModel.Properties;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Intentions.Impl.LanguageSpecific.Finders;
+using JetBrains.ReSharper.Feature.Services.Navigation.NavigationExtensions;
 using JetBrains.ReSharper.Feature.Services.Util;
 using JetBrains.ReSharper.Feature.Services.Xaml.Bulbs;
 using JetBrains.ReSharper.Intentions.Xaml.ContextActions;
@@ -181,6 +182,7 @@ public class CreateViewModelAction : ContextActionBase
                 cookie.Commit(NullProgressIndicator.Create());
                 
                 // Go to the newly created file. But only in Rider as this will fail in visual studio
+                newFile.Navigate(new TextRange(caretPosition ?? 0), true);
 #if RIDER
                 ShowProjectFile(solution, newFile.ToProjectFile().NotNull(),caretPosition).GetAwaiter().GetResult();
 #endif
