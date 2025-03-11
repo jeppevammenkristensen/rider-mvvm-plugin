@@ -15,10 +15,11 @@
 <![CDATA[
    <p>
       Provides different helpers to assist with developing a .NET based MVVM
-      solution:
+      solution with special focus on Community Toolkit:
     </p>
     <ul>
       <li>Create ViewModel from within a XAML view (Context Action)</li>
+      <li>Navigation between views and view models (Context Action)
       <li>
         Community Toolkit assistance:
         <ul>

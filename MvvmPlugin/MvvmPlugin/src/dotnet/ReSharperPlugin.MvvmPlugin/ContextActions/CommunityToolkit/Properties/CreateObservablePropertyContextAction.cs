@@ -67,8 +67,6 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
 
                     classLikeDeclaration.AddClassMemberDeclarationAfter(propertyDeclaration,
                         classLikeDeclaration.MemberDeclarations.OfType<IPropertyDeclaration>().LastOrDefault());
-
-                    
                     
 
                     propertyDeclaration = classLikeDeclaration.MemberDeclarations.OfType<IPropertyDeclaration>()
@@ -95,7 +93,7 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
                     {
                         var session = liveTemplatesManager.CreateHotspotSessionAtopExistingText(
                             solution, endCaret, control,
-                            LiveTemplatesManager.EscapeAction.LeaveTextAndCaret, type, propertyNameHotspot);
+                            LiveTemplatesManager.EscapeAction.LeaveTextAndCaret, propertyNameHotspot, type);
                         session.ExecuteAsync().NoAwait();
                     };
                 }
@@ -107,10 +105,10 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
                     
                     field = classLikeDeclaration.MemberDeclarations.OfType<IFieldDeclaration>().First(x => x.DeclaredName == PluginConstants.PlaceHolderName);
 
-                    // We add to hotspots which are used to present a way for the user to edit the type and the name of the field
-                    var type = new HotspotInfo(new TemplateField("type", 0),
+                    var typeExpression = new ConstantMacroDef().ToMacroCall().WithConstant("string");
+                    
+                    var type = new HotspotInfo(new TemplateField("type", typeExpression, 0),
                         field.TypeUsage.GetDocumentRange());
-                   
                     
                     var suggestNameExpression = new MacroCallExpressionNew(new SuggestVariableNameMacroDef());
                     
@@ -124,7 +122,7 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
                     {
                         var session = liveTemplatesManager.CreateHotspotSessionAtopExistingText(
                             solution,  DocumentRange.InvalidRange, control,
-                            LiveTemplatesManager.EscapeAction.LeaveTextAndCaret, type, propertyNameHotspot);
+                            LiveTemplatesManager.EscapeAction.LeaveTextAndCaret, propertyNameHotspot, type);
 
                         session.ExecuteAsync().NoAwait();
                     };

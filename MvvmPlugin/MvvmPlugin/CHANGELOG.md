@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.5.0
 - Added Go to view context action
-- Fix issue with navigating to newly created view model when calling Create ViewModel context action
+- Added Go to view model context action
+- Added support for generating and navigating view in Maui and WinUI solutions
 
 ## 0.4.1
 - Fixed critical bug with macro
