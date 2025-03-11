@@ -13,6 +13,14 @@ From a view (for instance a Window or Page etc.) a context action is available t
 
 ![CreateModelV2](https://github.com/user-attachments/assets/093f9ff9-784b-45b4-96a6-db982ddea21b)
 
+
+### Navigate to View
+
+This action allows you to navigate to the view from a ViewModel.
+
+### Navigate to ViewModel
+This action allows you to navigate to the ViewModel from within a xaml view. 
+
 ### Community Toolkit
 
 If the CommunityToolkit.Mvvm package is installed a range of context actions are available to assist in building the view model (focused on the Source Generator parts)
