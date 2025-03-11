@@ -7,7 +7,7 @@ using Assert = NUnit.Framework.Assert;
 
 namespace ReSharperPlugin.MvvmPlugin.Tests.Extensions;
 
-[TestSubject(typeof(MvvmPlugin.Extensions.Extensions))]
+[TestSubject(typeof(MvvmPlugin.Extensions.ContextActionUtil))]
 public class ExtensionsTest
 {
 

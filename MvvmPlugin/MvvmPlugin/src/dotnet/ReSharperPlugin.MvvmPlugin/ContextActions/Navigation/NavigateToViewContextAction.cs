@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Application.Progress;
@@ -6,19 +7,20 @@ using JetBrains.IDE;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Navigation.NavigationExtensions;
+using JetBrains.ReSharper.Feature.Services.Navigation.Requests;
+using JetBrains.ReSharper.Feature.Services.Occurrences;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.Resolve;
+using JetBrains.ReSharper.Psi.Search;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Psi.Xaml.Impl.Util;
 using JetBrains.ReSharper.Psi.Xaml.Tree;
-using JetBrains.ReSharper.Psi.Xaml.Tree.MarkupExtensions;
-using JetBrains.ReSharper.Psi.Xml.Tree;
 using JetBrains.TextControl;
-using JetBrains.Threading;
 using JetBrains.Util;
-using ReSharperPlugin.MvvmPlugin.Extensions;
+using JetBrains.Util.Logging;
 using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.Navigation;
@@ -40,11 +42,11 @@ public class NavigateToViewContextAction : ContextActionBase
         if (MatchedProjectFile is null)
             return null;
 
-        ShowProjectFile(solution, MatchedProjectFile, null).NoAwait();
+        MatchedProjectFile.ToSourceFile().Navigate(new TextRange(0), true);
         return null;
     }
 
-    public override string Text { get; } = "Go to View";
+    public override string Text { get; } = "Navigate to View";
 
     public override bool IsAvailable(IUserDataHolder cache)
     {
@@ -53,28 +55,52 @@ public class NavigateToViewContextAction : ContextActionBase
         if (_provider.GetSelectedTreeNode<ICSharpTypeDeclaration>() is not { } typeDeclaration)
             return false;
 
-        if (typeDeclaration.NameIdentifier.Name.IndexOf("ViewModel", StringComparison.OrdinalIgnoreCase) > -1)
-        {
-            var modelName = typeDeclaration.DeclaredName;
-            var typeNamespace = typeDeclaration.GetContainingNamespaceDeclaration()?.DeclaredName;
-            
-            foreach ((IProjectFile projectFile, IFile file) in typeDeclaration.GetProject().GetAllProjectFiles(
-                             x => x.LanguageType.Name == PluginConstants.Xaml)
-                         .Distinct()
-                         .Select(x => (x, x.GetPrimaryPsiFile()))
-                         .Where(x => x.Item2 is IXamlFile))
-            {
-                if (file is not IXamlFile xamlFile)
-                {
-                    continue;
-                }
+        XamlPlatformWrapper wrapper = XamlPlatformUtil.GetXamlNodePlatform(typeDeclaration);
+        if (wrapper.IsUnSupportedPlatform())
+            return false;
 
-                if (XamlFileMatchesType(xamlFile, typeNamespace, modelName))
+        bool isWinUI = wrapper.SupportedPlatformEnum == SupportedXamlPlatform.WINUI;
+        
+        var psiServices = typeDeclaration.GetPsiServices();
+        var consumer = new SearchResultsConsumer();
+
+        try
+        {
+            psiServices.SingleThreadedFinder.FindReferences(
+                typeDeclaration.DeclaredElement,
+                domain: SearchDomainFactory.Instance.CreateSearchDomain(typeDeclaration.GetProject().GetAllProjectFiles().Select(x => x.ToSourceFile())),
+                consumer: consumer,
+                NullProgressIndicator.Create());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogException("Failed to find references",ex);
+            return false;
+        }
+            
+        foreach (var result in consumer.GetOccurrences())
+        {
+            if (result is ReferenceOccurrence occurrence)
+            {
+                if (occurrence.SourceFile?.LanguageType.Name == PluginConstants.Xaml)
                 {
-                    MatchedProjectFile = projectFile;
+                    this.MatchedProjectFile = occurrence.SourceFile.ToProjectFile();
                     return true;
                 }
+
+                if (isWinUI)
+                {
+                    if (occurrence.Kinds.Any(x => x.Name == "Property declaration") &&
+                        occurrence.SourceFile?.ToProjectFile()?.GetDependsUponFile() is
+                            {LanguageType.Name: PluginConstants.Xaml} dependsUponFile)
+                    {
+                        this.MatchedProjectFile = dependsUponFile;
+                        return true;
+                    }
+                }
             }
+            
+            
         }
 
         return false;
@@ -101,7 +127,6 @@ public class NavigateToViewContextAction : ContextActionBase
     {
         var editor = solution.GetComponent<IEditorManager>();
         var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
-
         
         if (caretPosition != null)
         {
