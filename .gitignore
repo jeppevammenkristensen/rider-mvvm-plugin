@@ -402,3 +402,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 .idea
+publish-mvvm-plugin.ps1
