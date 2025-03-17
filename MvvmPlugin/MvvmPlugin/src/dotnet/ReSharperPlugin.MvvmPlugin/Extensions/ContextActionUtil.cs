@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Application.Settings;
 using JetBrains.IDE;
 using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ProjectModel;
@@ -10,14 +11,17 @@ using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.ExtensionsAPI.Caches2;
 using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.TextControl;
 using ReSharperPlugin.MvvmPlugin.Models;
+using ReSharperPlugin.MvvmPlugin.Options;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
 
@@ -246,12 +250,12 @@ public static class ContextActionUtil
 
         return false;
     }
-    
+
     /// <summary>
     /// Ensures partial and that the declaration inherits from ObservableObject
     /// If the ObservableObject could not be found false will be retured
     /// </summary>
-    /// <param name="declaration"></param>
+    /// <param name="classLikeDeclaration"></param>
     /// <param name="observableObject">If null the type will be loaded when this method is called</param>
     /// <param name="supressObservableObjectNotFound">If the type is not found and this value is true. The type will still be used</param>
     /// <returns></returns>
@@ -261,7 +265,20 @@ public static class ContextActionUtil
             return false;
         
         observableObject ??= PluginUtil.GetObservableObject(declaration); //.ShouldBeKnown();
-        
+
+        var setting = classLikeDeclaration.GetProject()?.GetSolution().GetSettingsStore();
+          var observableObjectValue = MvvmPluginSettingsRetriever.GetObservableObjectValue(setting);
+         
+         var type = observableObjectValue switch
+         {
+             ObservableObjectBaseType.Object => TypeConstants.ObservableObject,
+             ObservableObjectBaseType.Validator => TypeConstants.ObservableValidator,
+             ObservableObjectBaseType.Recipient => TypeConstants.ObservableRecipient,
+             ObservableObjectBaseType.Other => GetCustomViewModel(classLikeDeclaration, setting),
+             _ => throw new ArgumentOutOfRangeException()
+         };
+        // var type = new ClrTypeNameWrapper(observableObjectValue!).GetDeclaredType(classLikeDeclaration);
+
         if (observableObject.ShouldBeKnown() is null && !supressObservableObjectNotFound)
         {
             return false;
@@ -281,12 +298,37 @@ public static class ContextActionUtil
         {
             if (!declaration.SuperTypes.Any(x => TypesUtil.IsClassType(x)))
             {
-                declaration.SetSuperClass(observableObject);
+                declaration.SetSuperClass(type.GetDeclaredType(classLikeDeclaration));
             }
         }
 
         return true;
 
+    }
+
+    private static ClrTypeNameWrapper GetCustomViewModel(ICSharpTypeDeclaration classLikeDeclaration,
+        IContextBoundSettingsStore? setting)
+    {
+        var fallbackValue = TypeConstants.ObservableObject;
+        
+        var otherValues = MvvmPluginSettingsRetriever.GetOtherValuesAsHashSet(setting);
+        if (otherValues is { Count:<= 0})
+            return fallbackValue;
+
+        if (classLikeDeclaration.GetProject()?.GetPsiModules()?.FirstOrDefault() is not { } module)
+        {
+            return fallbackValue;
+        }
+
+        if (classLikeDeclaration.GetPsiServices().Symbols.GetSymbolScope(module, true, false) is not { } scope)
+            return fallbackValue;
+        
+         return scope
+            .GetPossibleInheritors("ObservableObject")
+            .OfType<Class>()
+            .Where(x => otherValues.Contains(x.ShortName))
+            .Select(x => new ClrTypeNameWrapper(x.GetClrName().FullName))
+            .FirstOrDefault() ?? fallbackValue;
     }
 
     public static bool ImplementsObservableObject(this IClassLikeDeclaration declaration,

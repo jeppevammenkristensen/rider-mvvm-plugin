@@ -68,14 +68,14 @@ public class MakeObservableContextAction : ContextActionBase
             {
                 ObservableInstalled = true;
                 
-                
                var declaredElement = classLikeDeclaration.DeclaredElement;
                if (declaredElement == null)
                    return false;
 
                if (declaredElement.IsDescendantOf(observableObject.GetTypeElement()))
                {
-                   return false;
+                   if (classLikeDeclaration.IsPartial)
+                        return false;
                }
             }
             else
@@ -91,13 +91,17 @@ public class MakeObservableContextAction : ContextActionBase
             
             if (classLikeDeclaration.SuperTypes.Any(x => x.IsClassType()))
             {
-                return false;
+                if (!classLikeDeclaration.IsPartial)
+                    return true;
+                else
+                {
+                    return false;
+                }
             }
 
-            if (!classLikeDeclaration.IsPartial)
-                return true;
+            return true;
 
-            
+
         }
         
         
