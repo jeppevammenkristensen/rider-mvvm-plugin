@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## 0.6.1
+- Fixed inconsistent naming of options from Mvvm Plugin -> Mvvm Helper
+
 ## 0.6.0
 - Added options to allow configuration of ObservableObject to use when making a class observable
 - Enhancements to Make Observable context action selection logic

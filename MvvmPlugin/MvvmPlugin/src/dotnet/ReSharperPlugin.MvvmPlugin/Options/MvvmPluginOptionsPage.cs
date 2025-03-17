@@ -30,7 +30,7 @@ namespace ReSharperPlugin.MvvmPlugin.Options;
 public class MvvmPluginOptionsPage : BeSimpleOptionsPage
 {
     private const string PID = nameof(MvvmPluginOptionsPage);
-    private const string PageTitle = "Mvvm Plugin";
+    private const string PageTitle = "Mvvm Helper";
 
     private readonly Lifetime _lifetime;
 
