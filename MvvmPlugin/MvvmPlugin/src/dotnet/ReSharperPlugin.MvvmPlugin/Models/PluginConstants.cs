@@ -21,6 +21,9 @@ public static class PluginConstants
 public static class TypeConstants
 {
     public static readonly ClrTypeNameWrapper ObservableObject = "CommunityToolkit.Mvvm.ComponentModel.ObservableObject";
+    public static readonly ClrTypeNameWrapper ObservableRecipient = "CommunityToolkit.Mvvm.ComponentModel.ObservableRecipient";
+    public static readonly ClrTypeNameWrapper ObservableValidator = "CommunityToolkit.Mvvm.ComponentModel.ObservableValidator";
+    
     public static readonly ClrTypeNameWrapper ObservableProperty = "CommunityToolkit.Mvvm.ComponentModel.ObservablePropertyAttribute";
     public static readonly ClrTypeNameWrapper AsyncRelayCommand = "CommunityToolkit.Mvvm.Input.IAsyncRelayCommand";
     public static readonly ClrTypeNameWrapper RelayCommand = "CommunityToolkit.Mvvm.Input.IRelayCommand";

@@ -8,6 +8,15 @@
 
    <extensions defaultExtensionNs="com.intellij">
      <defaultLiveTemplates file="/liveTemplates/Mvvm.xml"/>
+       
+       <!-- https://plugins.jetbrains.com/docs/intellij/settings-guide.html#values-for-parent-id-attribute -->
+       <applicationConfigurable
+               parentId="tools"
+               instance="com.jetbrains.rider.plugins.mvvmplugin.options.MvvmPluginOptionsPage"
+               id="MvvmPluginOptionsPage"
+               bundle="messages.OptionPagesBundle"
+               key="configurable.name.optionpages.options.title" />
+   
    </extensions>
 
 
