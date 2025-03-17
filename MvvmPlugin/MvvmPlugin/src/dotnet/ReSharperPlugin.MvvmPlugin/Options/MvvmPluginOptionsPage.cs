@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using JetBrains.Application.Settings;
 using JetBrains.Application.UI.Controls.FileSystem;
 using JetBrains.Application.UI.Options;
+using JetBrains.Application.UI.Options.OptionPages;
 using JetBrains.Application.UI.Options.OptionsDialog;
 using JetBrains.Application.UI.Options.OptionsDialog.SimpleOptions.ViewModel;
 using JetBrains.DataFlow;
@@ -20,7 +21,7 @@ namespace ReSharperPlugin.MvvmPlugin.Options;
 
 [OptionsPage(PID, PageTitle, typeof(UnitTestingThemedIcons.Session),
     // Discover derived types of AEmptyOptionsPage
-    ParentId = CodeEditingPage.PID)]
+    ParentId = ToolsPage.PID)]
 // Inline options page into another options page
 // [OptionsPage(PID, PageTitle, typeof(OptionsThemedIcons.EnvironmentGeneral),
 //     ParentId = CodeInspectionPage.PID,
