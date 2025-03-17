@@ -60,12 +60,12 @@ public class MvvmPluginOptionsPage : BeSimpleOptionsPage
         //
         // AddHeader("Advanced Options");
         //
-        AddRadioOption((MvvmPluginSettings x) => x.PreferredBaseObservable, "Enum value",
+        AddRadioOption((MvvmPluginSettings x) => x.PreferredBaseObservable, "Base class creation value",
             Enum.GetValues(typeof(ObservableObjectBaseType)).Cast<int>()
                 .Select(x => (Value: x, Name: Enum.GetName(typeof(ObservableObjectBaseType), x)))
                 .Select(x => new RadioOptionPoint(x.Value, x.Name)).ToArray());
         
-        AddCommentText("If you choose other. When making an object observable the code will look for a base class that matches the names defined below (seperated by , ) ");
+        AddCommentText("If you choose Other, then when making an object observable the code will look for a base class that matches the names defined below (seperated by , ) ");
         
         AddTextBox((MvvmPluginSettings x) => x.OtherValuesString, "Names of base classes (case insensitive)");
         
