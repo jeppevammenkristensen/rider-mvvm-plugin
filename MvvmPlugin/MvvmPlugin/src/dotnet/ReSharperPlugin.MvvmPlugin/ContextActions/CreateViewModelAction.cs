@@ -243,8 +243,11 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : Con
     {
         var xamlFactory = XamlElementFactory.GetInstance(xamlFile, true);
         // Get the type declaration (will be for instance the root <Window> or <UserControl>
-        var xamlTypeDeclaration = xamlFile.GetTypeDeclarations().First();
+        var xamlTypeDeclaration = xamlFile.GetTypeDeclarations().ToList().FirstOrDefault();
 
+        if (xamlTypeDeclaration is null)
+            return;
+        
         INamespaceAlias? namespaceAlias = null;
         
         if (xamlTypeDeclaration.NamespaceAliases
