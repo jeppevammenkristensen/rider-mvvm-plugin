@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.6.2
+- Fixed options naming
+- Logic less restrictive as when to suggest partial properties (CommunityToolkit)
+- Logic less restrictive regarding general source generated properties (CommunityToolkit)
+
 ## 0.6.1
 - Fixed inconsistent naming of options from Mvvm Plugin -> Mvvm Helper
 
