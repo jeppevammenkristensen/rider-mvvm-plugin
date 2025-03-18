@@ -82,7 +82,8 @@ public static class ContextActionUtil
             return false;
         }
 
-        return communityToolkitType.Assembly.Version?.Major >= 8;
+        return communityToolkitType.Assembly.Version >= new Version(8, 0, 0) 
+               && treeNode.GetCSharpProjectConfiguration() is { LanguageVersion:>= CSharpLanguageVersion.CSharp8 };
     }
     
     /// <summary>
@@ -105,8 +106,21 @@ public static class ContextActionUtil
                new Version(8,
                    4) &&
                treeNode.GetCSharpProjectConfiguration() is {LanguageVersion: CSharpLanguageVersion.Preview} config &&
-               config.IsDotnet90OrHigher();
+               config.IsPartialPropertyFriendlyTargetFramework();
 
+    }
+
+    public static bool IsPartialPropertyFriendlyTargetFramework(this CSharpProjectConfiguration? configuration)
+    {
+        if (configuration?.TargetFrameworkId is not {} target)
+            return false;
+
+        if (target.IsNetStandard || target.IsNetCoreApp || target.IsNetCore)
+        {
+            return true;
+        }
+
+        return false;
     }
     
     /// <summary>
@@ -148,6 +162,14 @@ public static class ContextActionUtil
         return propertyDeclaration;  
     }
 
+    public static bool IsDotnetMajorOrHigher(this CSharpProjectConfiguration? configuration, int majorVersion)
+    {
+        if (configuration == null)
+            return false;
+        
+        return configuration.TargetFrameworkId is {} target && target.Version.Major >= majorVersion && (target.IsNetCore || target.IsNetCoreApp);
+    }
+    
     /// <summary>
     /// Evaluates if the given configuration is dotnet 9 or higher. If the passed in configuration
     /// is null false is returned

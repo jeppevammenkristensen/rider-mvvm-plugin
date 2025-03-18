@@ -12,8 +12,6 @@ using JetBrains.IDE.UI;
 using JetBrains.IDE.UI.Extensions;
 using JetBrains.IDE.UI.Options;
 using JetBrains.Lifetimes;
-using JetBrains.ReSharper.Feature.Services.Daemon.OptionPages;
-using JetBrains.ReSharper.Feature.Services.OptionPages.CodeEditing;
 using JetBrains.ReSharper.UnitTestFramework.Resources;
 using JetBrains.Rider.Model.UIAutomation;
 
