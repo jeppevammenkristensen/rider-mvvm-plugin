@@ -9,8 +9,8 @@ import java.io.ByteArrayOutputStream
 plugins {
     id("java")
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.intelliJPlatform)
-    alias(libs.plugins.gradleJvmWrapper)    
+    alias(libs.plugins.gradleJvmWrapper)
+    alias(libs.plugins.intelliJPlatform)    
 }
 
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
