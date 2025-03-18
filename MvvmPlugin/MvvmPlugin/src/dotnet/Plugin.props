@@ -10,7 +10,7 @@
 
     <Authors>Jeppe Roi Kristensen</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of Mvvm Helper</Copyright>
-    <PackageTags>resharper plugin rider</PackageTags>    
+    <PackageTags>resharper plugin rider mvvm community toolkit</PackageTags>    
     <PackageProjectUrl>https://github.com/jeppevammenkristensen/rider-mvvm-plugin</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>    
     <PackageIconUrl></PackageIconUrl>
