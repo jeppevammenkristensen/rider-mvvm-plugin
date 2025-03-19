@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.6.3
+- Fixed issue with using Other and identifying candidates that are not direct subtypes of ObservableObject
+
 ## 0.6.2
 - Fixed options naming
 - Logic less restrictive as when to suggest partial properties (CommunityToolkit)

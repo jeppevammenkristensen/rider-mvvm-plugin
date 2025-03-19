@@ -16,6 +16,7 @@ using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Caches2;
+using JetBrains.ReSharper.Psi.Impl.CodeStyle;
 using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
@@ -29,7 +30,6 @@ public static class ContextActionUtil
 {
     public static CSharpProjectConfiguration? GetCSharpProjectConfiguration(this ITreeNode treeNode)
     {
-        
         if (treeNode.GetProject() is { } project &&
             project.ProjectProperties.TryGetConfiguration<CSharpProjectConfiguration>(project.GetCurrentTargetFrameworkId()) is {} configuration)
         {
@@ -67,7 +67,7 @@ public static class ContextActionUtil
     }
 
     /// <summary>
-    /// Checks if the CommunityTookit is referenced in the project and that
+    /// Checks if the CommunityToolkit is referenced in the project and that
     /// it is at least version 8 (which supports source generators)
     /// </summary>
     /// <param name="treeNode"></param>
@@ -325,7 +325,6 @@ public static class ContextActionUtil
         }
 
         return true;
-
     }
 
     private static ClrTypeNameWrapper GetCustomViewModel(ICSharpTypeDeclaration classLikeDeclaration,
@@ -334,23 +333,51 @@ public static class ContextActionUtil
         var fallbackValue = TypeConstants.ObservableObject;
         
         var otherValues = MvvmPluginSettingsRetriever.GetOtherValuesAsHashSet(setting);
-        if (otherValues is { Count:<= 0})
+        if (otherValues is { Empty: true})
             return fallbackValue;
 
         if (classLikeDeclaration.GetProject()?.GetPsiModules()?.FirstOrDefault() is not { } module)
         {
             return fallbackValue;
         }
+        
+        var project = classLikeDeclaration.GetProject();
+        
+        var referencedProjects = project.GetReferencedProjects(project!.GetCurrentTargetFrameworkId());
 
         if (classLikeDeclaration.GetPsiServices().Symbols.GetSymbolScope(module, true, false) is not { } scope)
             return fallbackValue;
         
-         return scope
-            .GetPossibleInheritors("ObservableObject")
-            .OfType<Class>()
-            .Where(x => otherValues.Contains(x.ShortName))
-            .Select(x => new ClrTypeNameWrapper(x.GetClrName().FullName))
-            .FirstOrDefault() ?? fallbackValue;
+        // Get all files from the project and from referenced projects
+        var allFiles = project?.GetAllProjectFiles().Concat(referencedProjects.SelectMany(x => x.GetAllProjectFiles())) ?? [];
+        
+        var result = new List<(ClrTypeNameWrapper wrapper, int sortOrder)>();
+
+        var observableTypeElement = fallbackValue.GetDeclaredType(classLikeDeclaration).GetTypeElement();
+        
+        // Enumerate all 
+        foreach (var projectFile in allFiles.Where(x => x.LanguageType.Is<CSharpProjectFileType>()))
+        {
+            if (projectFile?.ToSourceFile()?.GetTheOnlyPsiFile<CSharpLanguage>() is ICSharpFile csharpFile)
+            {
+                foreach (var declaration in csharpFile.Descendants<IClassLikeDeclaration>())
+                {
+                    if (otherValues.IsMatch(declaration.NameIdentifier.Name))
+                    {
+                        if (declaration.DeclaredElement is { } declaredElement)
+                        {
+                            if (declaredElement.IsDescendantOf(observableTypeElement))
+                            {
+                                result.Add((new (declaredElement.GetClrName()),
+                                    otherValues.Sort(declaration.NameIdentifier.Name)));
+                            }
+                        }
+                    }
+                }
+            } 
+        }
+        
+        return result.OrderBy(x => x.sortOrder).Select(x => x.wrapper).FirstOrDefault() ?? fallbackValue;
     }
 
     public static bool ImplementsObservableObject(this IClassLikeDeclaration declaration,

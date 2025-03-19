@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Application.Settings;
@@ -8,6 +9,28 @@ using JetBrains.Util;
 
 namespace ReSharperPlugin.MvvmPlugin.Options;
 
+public class SortedResult
+{
+    private Dictionary<string, int> _dictionary;
+    public SortedResult(IEnumerable<string> values)
+    {
+        _dictionary = values.Select((x,i) => (x,i)).ToDictionary(x => x.x, x => x.i, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public bool Empty => _dictionary.Count <= 0;
+
+    public bool IsMatch(string value)
+    {
+        return _dictionary.ContainsKey(value);
+    }
+
+    public int Sort(string value)
+    {
+        return _dictionary.TryGetValue(value, out var index) ? index : int.MaxValue;
+    }
+   
+}
+
 public static class MvvmPluginSettingsRetriever
 {
     public static ObservableObjectBaseType GetObservableObjectValue(IContextBoundSettingsStore? settingsStore)
@@ -15,13 +38,11 @@ public static class MvvmPluginSettingsRetriever
         return settingsStore?.GetValue((MvvmPluginSettings s) => s.PreferredBaseObservable) ?? ObservableObjectBaseType.Object;
     }
 
-    public static JetHashSet<string> GetOtherValuesAsHashSet(IContextBoundSettingsStore? setting)
+    public static SortedResult GetOtherValuesAsHashSet(IContextBoundSettingsStore? setting)
     {
         var value = setting?.GetValue((MvvmPluginSettings s) => s.OtherValuesString) ?? "ViewModelBase";
-        return value.Split([','], StringSplitOptions.RemoveEmptyEntries)
-            .Select(x => x.Trim())
-            .ToJetHashSet(StringComparer.OrdinalIgnoreCase);
-
+        return new SortedResult(value.Split([','], StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim()));
     }
 }
 

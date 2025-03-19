@@ -4,11 +4,13 @@ import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.intellij.platform.gradle.Constants
 import java.io.ByteArrayOutputStream
 
+// To access libs values go to the libs.versions.toml file
+
 plugins {
     id("java")
     alias(libs.plugins.kotlinJvm)
-    id("org.jetbrains.intellij.platform") version "2.0.0-beta5"     // See https://github.com/JetBrains/intellij-platform-gradle-plugin/releases
-    id("me.filippov.gradle.jvm.wrapper") version "0.14.0"
+    alias(libs.plugins.intelliJPlatform)
+    alias(libs.plugins.gradleJvmWrapper)    
 }
 
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
@@ -39,7 +41,7 @@ repositories {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.8"
+    gradleVersion = "8.13"
     distributionType = Wrapper.DistributionType.ALL
     distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
@@ -145,7 +147,7 @@ tasks.buildPlugin {
 
 dependencies {
     intellijPlatform {
-        rider(ProductVersion)
+        rider(ProductVersion, useInstaller=false)
         jetbrainsRuntime()
         instrumentationTools()
 

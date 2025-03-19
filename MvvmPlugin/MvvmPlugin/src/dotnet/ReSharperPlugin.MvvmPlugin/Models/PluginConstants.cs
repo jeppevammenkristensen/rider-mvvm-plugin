@@ -61,9 +61,14 @@ public class ClrTypeNameWrapper
         Generic = generic;
     }
 
+    public ClrTypeNameWrapper(IClrTypeName clrTypeName) : this(clrTypeName.FullName, false)
+    {
+        
+    }
+
     public bool Generic { get;  }
 
-    public ClrTypeName GetClrName() => new ClrTypeName(Name);
+    public IClrTypeName GetClrName() => new ClrTypeName(Name);
 
     public ClrTypeNameWrapper GenericOneType()
     {
@@ -75,9 +80,9 @@ public class ClrTypeNameWrapper
     
     public static implicit operator ClrTypeNameWrapper(string name) => new(name);
    
-    public static implicit operator ClrTypeName(ClrTypeNameWrapper wrapper) => wrapper.GetClrName();
+    public static implicit operator ClrTypeName(ClrTypeNameWrapper wrapper) => new(wrapper.Name);
 
-    public static implicit operator string(ClrTypeNameWrapper wrapper) => wrapper;
+    public static implicit operator string(ClrTypeNameWrapper wrapper) => wrapper.ToString();
    
     
     public IDeclaredType GetDeclaredType(ITreeNode node)
