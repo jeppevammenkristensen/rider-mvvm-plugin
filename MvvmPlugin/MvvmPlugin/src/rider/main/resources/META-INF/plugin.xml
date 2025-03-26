@@ -38,8 +38,9 @@
           <li>Create observable property (Context Action)</li>
           <li>Enable partial properties (Context Action)</li>
           <li>Make method relay (Context Action)</li>
+          <li>Convert to relay (Context Action) </li>
           <li>Add NotifyPropertyChangedFor (Context Action)</li>
-          <li>Add NotifyCanExecuteChangedFor (Context Action)</li>
+          <li>Add NotifyCanExecuteChangedFor (Context Action)</li>          
           <li>Create observable property Postfix template (obsprop)</li>
         </ul>
       </li>
