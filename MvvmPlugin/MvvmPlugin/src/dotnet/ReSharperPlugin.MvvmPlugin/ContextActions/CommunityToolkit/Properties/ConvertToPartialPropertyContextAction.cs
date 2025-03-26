@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
@@ -6,12 +5,9 @@ using JetBrains.ReSharper.Feature.Services.BulbActions;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Impl.CodeStyle;
-using JetBrains.ReSharper.Psi.Search;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;
-using ReSharperPlugin.MvvmPlugin.Models;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 

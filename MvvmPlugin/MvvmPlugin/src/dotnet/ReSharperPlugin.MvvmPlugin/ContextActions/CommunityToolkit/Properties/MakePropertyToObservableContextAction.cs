@@ -21,8 +21,9 @@ using ReSharperPlugin.MvvmPlugin.Models;
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
 [ContextAction(
-    Name = "Make property observable (CommunityTookit)",
-    Description = "Converts the property to a field and decorates it with the ObservableProperty if partial properties are not supported. Otherwise it will make the property partial and decoreate with the ObservableProperty attribute", 
+    Name = "Make property observable (CommunityToolkit)",
+    Description =
+        "Converts the property to a field and decorates it with the ObservableProperty if partial properties are not supported. Otherwise it will make the property partial and decoreate with the ObservableProperty attribute",
     GroupType = typeof(CSharpContextActions))]
 public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
@@ -36,36 +37,43 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return null;
-        
+
         var cSharpTypeDeclaration = propertyDeclaration.GetContainingTypeDeclaration();
         var project = propertyDeclaration.GetProject();
 
         bool usePartialMethodAproach = false;
-        
-        if (this.LargerThanOrEqualToVersion84 && project?.ProjectProperties.ActiveConfigurations.Configurations.FirstOrDefault() is CSharpProjectConfiguration  configuration)
+
+        if (this.LargerThanOrEqualToVersion84 &&
+            project?.ProjectProperties.ActiveConfigurations.Configurations.FirstOrDefault() is
+                CSharpProjectConfiguration configuration)
         {
             // If LanguageVersion is preview and targetframeworkId is 9 or more (might change)
             // we use the approach with declaring a partial property instead of a field
             // Right now it requires this. It might change in the future
 
-            if (configuration is {LanguageVersion: CSharpLanguageVersion.Preview, TargetFrameworkId: {
-                    Version: {Major: >= 9}
-                } target} && (target.IsNetCore || target.IsNetCoreApp))
+            if (configuration is
+                {
+                    LanguageVersion: CSharpLanguageVersion.Preview, TargetFrameworkId:
+                    {
+                        Version: {Major: >= 9}
+                    } target
+                } && (target.IsNetCore || target.IsNetCoreApp))
             {
                 usePartialMethodAproach = true;
-            } 
+            }
         }
 
-        if (PluginUtil.GetObservableObject(propertyDeclaration).ShouldBeKnown() is {} observableObject &&
-            PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is {} observableProperty)
+        if (PluginUtil.GetObservableObject(propertyDeclaration).ShouldBeKnown() is { } observableObject &&
+            PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is { } observableProperty)
         {
             using (WriteLockCookie.Create())
             {
                 // This will ensure that the containing class is partial and if possible
                 // inherits from ObservableObject
-                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject, supressObservableObjectNotFound: false))
+                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject,
+                        supressObservableObjectNotFound: false))
                     return null;
-                
+
                 // Get the factory we will use to generate a field
                 var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
 
@@ -76,21 +84,21 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
                         factory.CreateAttribute(observableProperty.GetTypeElement()!), null);
                     return null;
                 }
-                
+
                 // Create a field declaration with the type from the property and a snake cased name
                 // The property should have a summary with a cref to the property that is generated behind
                 // it will also be decorated with the ObservableProperty attribute
-                
-                 var field = BuildField(factory, propertyDeclaration, observableProperty);
-                
-                 // We retrieve the parent. this will ensure that the output will be 
-                 // with attributes, documents etc. If we only use the field declaration it will something like
-                 // _name; or _name = "Hello" while IMultipleFieldDeclaration will generate something akin to
-                 // private string _name = "Hello"; (also with summary and attributes)
+
+                var field = BuildField(factory, propertyDeclaration, observableProperty);
+
+                // We retrieve the parent. this will ensure that the output will be 
+                // with attributes, documents etc. If we only use the field declaration it will something like
+                // _name; or _name = "Hello" while IMultipleFieldDeclaration will generate something akin to
+                // private string _name = "Hello"; (also with summary and attributes)
                 if (field is {Parent: IMultipleFieldDeclaration multiFieldDeclaration})
                 {
                     // Replace the property with the field
-                    ModificationUtil.ReplaceChild(propertyDeclaration, multiFieldDeclaration);    
+                    ModificationUtil.ReplaceChild(propertyDeclaration, multiFieldDeclaration);
                 }
             }
         }
@@ -98,7 +106,8 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         return null;
     }
 
-    private IFieldDeclaration BuildField(CSharpElementFactory factory, IPropertyDeclaration propertyDeclaration, IDeclaredType observableProperty)
+    private IFieldDeclaration BuildField(CSharpElementFactory factory, IPropertyDeclaration propertyDeclaration,
+        IDeclaredType observableProperty)
     {
         var builder = new StringBuilder();
 
@@ -113,17 +122,18 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
             builder.AppendLine($"/// Generated property <see cref=\"{propertyDeclaration.DeclaredName}\"/> ");
             builder.AppendLine("/// </summary>");
         }
-        
+
         // $0 ObservableProperty reference
         // $1 Property type
-        
+
         builder.AppendLine($"[$0]");
         builder.AppendLine($"private $1 {propertyDeclaration.DeclaredName.ToFieldName()};");
-        
-        var field = (IFieldDeclaration)factory.CreateTypeMemberDeclaration(builder.ToString(), observableProperty, propertyDeclaration.Type);
-        
+
+        var field = (IFieldDeclaration) factory.CreateTypeMemberDeclaration(builder.ToString(), observableProperty,
+            propertyDeclaration.Type);
+
         // Here we check to see if we need to transfer attributes and/or initialization to the field
-        
+
         // If there are attributes on the property add them to the field
         // The property is filtered away if it is decorated with ObservableProperty
         // So we don't check for that
@@ -134,7 +144,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
                 field.AddAttributeAfter(attribute, field.Attributes.Last());
             }
         }
-        
+
         // If there is an initializer on the property. For instance = "Hello World" 
         // we apply that to the field
         if (propertyDeclaration.Initializer is IExpressionInitializer initializer)
@@ -145,25 +155,33 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         return field;
     }
 
-    public override string Text => "Make property observable (CommunityTookit)";
+    public override string Text => "Make property observable (CommunityToolkit)";
+
     public override bool IsAvailable(IUserDataHolder cache)
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return false;
 
-        if (PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is not {} observableProperty)
+        if (PluginUtil.GetObservablePropertyAttribute(propertyDeclaration).ShouldBeKnown() is not
+            { } observableProperty)
             return false;
+
+        // Do not suggest this action if the type of the property is an AsyncRelayCommand
+        if (propertyDeclaration.Type.IsAnyKindOfRelayCommand(propertyDeclaration))
+        {
+            return false;
+        }
 
         if (!propertyDeclaration.CommunityToolkitCanHandleSourceGenerators(observableProperty))
             return false;
 
-        LargerThanOrEqualToVersion84 = propertyDeclaration.CommunityToolkitCanHandlePartialProperties(observableProperty);
+        LargerThanOrEqualToVersion84 =
+            propertyDeclaration.CommunityToolkitCanHandlePartialProperties(observableProperty);
 
         if (propertyDeclaration.DeclaredElement?.HasAttributeInstance(observableProperty.GetClrName(), false) == true)
             return false;
 
         return true;
-
     }
 
     private bool LargerThanOrEqualToVersion84 { get; set; }
