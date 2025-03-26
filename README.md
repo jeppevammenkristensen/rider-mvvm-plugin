@@ -91,7 +91,7 @@ This will take a field definition decorated with `ObservableProperty` like for i
 private string _someField;
 ```
 
-And convert it to the newer partial property format if applicable (CommunityTookit.Mvvm version larger than 8.4 and preview set). 
+And convert it to the newer partial property format if applicable (CommunityToolkit.Mvvm version larger than 8.4 and preview set). 
 
 NB! This context action is scoped, so it can also be applied to the file, project or solution.
 

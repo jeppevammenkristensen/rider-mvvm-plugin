@@ -10,6 +10,7 @@ using JetBrains.ProjectModel.Properties;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Occurrences;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.ReSharper.Psi.CodeStyle;
@@ -66,6 +67,12 @@ public static class ContextActionUtil
         return false;
     }
 
+    public static bool TryGetObservableObject(this ITreeNode treeNode, out IDeclaredType? observableObject)
+    {
+        observableObject = PluginUtil.GetObservableObject(treeNode).ShouldBeKnown();
+        return observableObject != null;
+    }
+    
     /// <summary>
     /// Checks if the CommunityToolkit is referenced in the project and that
     /// it is at least version 8 (which supports source generators)
@@ -193,6 +200,32 @@ public static class ContextActionUtil
         before.AddLineBreakAfter();
     }
 
+    public static TNode? TryGetReferencedNode<TNode>(this IExpression? expression) where TNode : class,IDeclaration
+    {
+        if (expression is IReferenceExpression referenceExpression &&  referenceExpression.Reference.Resolve().DeclaredElement?.GetSingleDeclaration<TNode>() is {} result)
+        {
+            return result;
+        }
+
+        return null;
+    }
+    
+    public static TNode? TryGetReferencedNode<TNode>(this ReferenceOccurrence occurrence) where TNode : class,ITreeNode 
+    {
+        if (occurrence?.PrimaryReference?.GetTreeNode() is TNode result)
+        {
+            return result;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decorates a member with the 
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="canExecuteName"></param>
+    /// <param name="factory"></param>
     public static void DecorateWithRelayPropertyAttribute(this ICSharpTypeMemberDeclaration item, string? canExecuteName,
         CSharpElementFactory factory)
     {
@@ -243,8 +276,8 @@ public static class ContextActionUtil
         {
             ClrTypeNameWrapper[] types =
             [
-                TypeConstants.RelayCommand, TypeConstants.RelayCommand.GenericOneType(),
-                TypeConstants.AsyncRelayCommand, TypeConstants.AsyncRelayCommand.GenericOneType()
+                TypeConstants.IRelayCommand, TypeConstants.IRelayCommand.GenericOneType(),
+                TypeConstants.IAsyncRelayCommand, TypeConstants.IAsyncRelayCommand.GenericOneType()
             ];
             
             if (types.Any(x => x.GetClrName().Equals(declaredType.GetClrName()))) 
@@ -271,6 +304,25 @@ public static class ContextActionUtil
         }
 
         return false;
+    }
+
+    private static readonly ClrTypeNameWrapper[] RelayCommandInterfaces =
+        [TypeConstants.IRelayCommand, TypeConstants.IAsyncRelayCommand];
+    
+    /// <summary>
+    /// Determines if the given type is a descendant in any way of IRelayCommand or IAsyncRelayCommand
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="node">This is required so we can call the IsDescendant of</param>
+    /// <returns></returns>
+    public static bool IsAnyKindOfRelayCommand(this IType type, ITreeNode node)
+    {
+        var typeElement = type.GetTypeElement();
+        if (typeElement is null)
+            return false;
+
+        return RelayCommandInterfaces
+            .Any(x => typeElement.IsDescendantOf(x.GetDeclaredType(node).GetTypeElement()));
     }
 
     /// <summary>
