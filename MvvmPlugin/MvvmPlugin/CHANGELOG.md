@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.7.1
+- Fix to `Convert To Relay Command` context action to support creating a method with correct signature if, one could not be derived
+
 ## 0.7.0
 - Added Convert to Relay Command context action to convert to source generated RelayCommand
 - Create Relay Context action to generate relay command when Source generation is not available
