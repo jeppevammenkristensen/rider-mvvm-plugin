@@ -326,6 +326,34 @@ public static class ContextActionUtil
     }
 
     /// <summary>
+    /// Gets <see cref="RelayInformation"/> regarding a given type. Which is expected
+    /// to in some way to be a descendant of IRelayCommand
+    /// </summary>
+    /// <param name="type">The type to check against</param>
+    /// <param name="node">This is required to retrieve the DeclaredType</param>
+    /// <returns></returns>
+    public static RelayInformation? GetRelayInformation(this IType type, ITreeNode node)
+    {
+        if (!(type is IDeclaredType declaredType && declaredType.GetTypeElement() is {} typeElement))
+            return null;
+
+        var hasParameters = typeElement.TypeParametersCount > 0;
+        IType? genericType = null;
+        if (hasParameters)
+        {
+            genericType = declaredType.GetSubstitution()[typeElement.TypeParameters[0]];
+        }
+
+        var isAsync = typeElement.IsDescendantOf(TypeConstants.IAsyncRelayCommand.GetDeclaredType(node).GetTypeElement());
+        return new RelayInformation(isAsync,hasParameters, genericType);
+
+        //var typeElement = type.GetTypeElement(); return new RelayInformation(isAsync, hasParameters, genericType);
+
+    }
+    
+    
+
+    /// <summary>
     /// Ensures partial and that the declaration inherits from ObservableObject
     /// If the ObservableObject could not be found false will be retured
     /// </summary>

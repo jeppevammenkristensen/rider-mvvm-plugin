@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.BulbActions;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Html;
 using JetBrains.ReSharper.Feature.Services.Occurrences;
 using JetBrains.ReSharper.Feature.Services.Util;
 using JetBrains.ReSharper.Psi;
@@ -123,8 +125,8 @@ public class ConvertToRelayProperty : ModernScopedContextActionBase<IPropertyDec
             // If we have not been able to determine a command method we will generate it
             if (context.CommandMethod == null)
             {
+                HandleNoMatchedCommandMethod(property, parent, context);
                 // For now we do nothing
-                return null;
             }
 
 
@@ -146,6 +148,54 @@ public class ConvertToRelayProperty : ModernScopedContextActionBase<IPropertyDec
         return null;
     }
 
+    private void HandleNoMatchedCommandMethod(IPropertyDeclaration property, IClassLikeDeclaration classLikeDeclaration,
+        ConvertToRelayContext context)
+    {
+        Regex regex = new("Command$");
+        var methodName = regex.Replace(property.NameIdentifier.Name, string.Empty);
+
+        var methodDeclaration = CreateMethod(property, methodName);
+        context.CommandMethod = classLikeDeclaration.AddClassMemberDeclarationAfter(methodDeclaration,
+            classLikeDeclaration.MethodDeclarations.LastOrDefault());
+
+        var canExecuteName = $"CanExecute{methodDeclaration.NameIdentifier.Name}";
+
+        if (_provider.ElementFactory.CreateTypeMemberDeclaration("private bool $0 () { return true; }", canExecuteName)
+            is not IMethodDeclaration m)
+        {
+            return;
+        }
+        
+        if (methodDeclaration.ParameterDeclarations.FirstOrDefault() is { } parameter)
+        {
+            m.AddParameterDeclarationAfter(parameter, null);
+        }
+
+        context.CanExecuteMethod = classLikeDeclaration.AddClassMemberDeclarationBefore(m, null);
+
+        // TODO: At some stage we need to check if the method is public and if not called directly make it private
+
+
+    }
+
+    private IMethodDeclaration CreateMethod(IPropertyDeclaration property, string methodName)
+    {
+        if (property.Type.GetRelayInformation(property) is { } information)
+        {
+            if (information.Async)
+            {
+                return (IMethodDeclaration)(information.HasParameters ? _provider.ElementFactory.CreateTypeMemberDeclaration("private async Task $0 ($1 first) { }", methodName, information.ParameterType) : _provider.ElementFactory.CreateTypeMemberDeclaration("private async Task $0 () {}", methodName, information.ParameterType));
+            }
+            else
+            {
+                return (IMethodDeclaration)(information.HasParameters ? _provider.ElementFactory.CreateTypeMemberDeclaration("private void $0($1 first) { }", methodName, information.ParameterType) : _provider.ElementFactory.CreateTypeMemberDeclaration("private void $0 () {}", methodName, information.ParameterType));
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException($"Could not retrieve relay information for type {property.GetText()}");
+        }
+    }
 
 
     /// <summary>
