@@ -1,4 +1,3 @@
-using FluentAssertions;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using ReSharperPlugin.MvvmPlugin.Extensions;
@@ -19,6 +18,6 @@ public class ExtensionsTest
     [TestCase("A","_a")]
     public void ToSnakeCase_Generates_Expected_Result(string input, string expected)
     {
-        input.ToFieldName().Should().Be(expected);
+        Assert.AreEqual(input.ToFieldName(),expected);
     }
 }

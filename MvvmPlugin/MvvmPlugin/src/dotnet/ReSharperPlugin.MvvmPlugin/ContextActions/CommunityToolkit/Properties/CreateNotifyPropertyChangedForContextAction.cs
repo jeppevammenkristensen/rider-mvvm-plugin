@@ -110,12 +110,7 @@ public class CreateNotifyPropertyChangedForContextAction(ICSharpContextActionDat
         protected override Action<ITextControl>? ExecutePsiTransaction(IClassMemberDeclaration availabilityInfo, ISolution solution,
             IProgressIndicator progress)
         {
-            var notifyCanExecuteChangedFor = PluginUtil.GetNotifyPropertyChangedFor(availabilityInfo);
-            var attribute = provider.ElementFactory.CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement()!);
-            attribute.AddArgumentAfter(provider.ElementFactory.CreateArgument(ParameterKind.VALUE,
-                provider.ElementFactory.CreateExpression($"nameof({name})")), null);
-            
-            availabilityInfo.AddAttributeBefore(attribute, availabilityInfo.Attributes.LastOrDefault());
+            availabilityInfo.AddNotifyPropertyChangedAttribute(name,provider.ElementFactory);
             return null;
         }
     }

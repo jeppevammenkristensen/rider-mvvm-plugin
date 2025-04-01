@@ -21,7 +21,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Name = "Add NotifyCanExecute attribute",
     Description = "Add NotifyCanExecute attribute to the selected property or field.",
     GroupType = typeof(CSharpContextActions))]
-public class CreateNotifyCanExecuteContextActionf(ICSharpContextActionDataProvider provider) : IContextAction
+public class CreateNotifyCanExecuteContextAction(ICSharpContextActionDataProvider provider) : IContextAction
 {
     // The command names to suggest
     private List<string>? myCommandNames; 

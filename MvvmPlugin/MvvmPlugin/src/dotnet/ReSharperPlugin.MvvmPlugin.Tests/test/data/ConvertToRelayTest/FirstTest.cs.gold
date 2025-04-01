@@ -1,0 +1,17 @@
+using CommunityToolkit.Mvvm;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ReSharperPlugin.MvvmPlugin.Tests.test.data.ConvertToRelayTest;
+
+public partial class FirstTest : ObservableObject
+{
+  [RelayCommand(CanExecute = nameof(CanExecuteSome))]
+  priv{caret}ate void Some()
+  {
+  }
+
+  private bool CanExecuteSome()
+  {
+    return true;
+  }
+}

@@ -10,6 +10,7 @@ using JetBrains.ProjectModel.Properties;
 using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Generate;
 using JetBrains.ReSharper.Feature.Services.Occurrences;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Caches;
@@ -117,6 +118,16 @@ public static class ContextActionUtil
 
     }
 
+    public static void AddNotifyPropertyChangedAttribute(this IClassMemberDeclaration propertyDeclaration, string property, CSharpElementFactory factory)
+    {
+        var notifyCanExecuteChangedFor = PluginUtil.GetNotifyPropertyChangedFor(propertyDeclaration);
+        var attribute = factory.CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement()!);
+        attribute.AddArgumentAfter(factory.CreateArgument(ParameterKind.VALUE,
+            factory.CreateExpression($"nameof({property})")), null);
+            
+        propertyDeclaration.AddAttributeBefore(attribute, propertyDeclaration.Attributes.LastOrDefault());
+    }
+
     public static bool IsPartialPropertyFriendlyTargetFramework(this CSharpProjectConfiguration? configuration)
     {
         if (configuration?.TargetFrameworkId is not {} target)
@@ -202,9 +213,14 @@ public static class ContextActionUtil
 
     public static TNode? TryGetReferencedNode<TNode>(this IExpression? expression) where TNode : class,IDeclaration
     {
-        if (expression is IReferenceExpression referenceExpression &&  referenceExpression.Reference.Resolve().DeclaredElement?.GetSingleDeclaration<TNode>() is {} result)
+        if (expression is IReferenceExpression referenceExpression &&  referenceExpression.Reference.Resolve().DeclaredElement?.GetSingleDeclaration() is {} result)
         {
-            return result;
+            if (result is TNode typeResult)
+            {
+                return typeResult;
+            }
+
+            return null;
         }
 
         return null;
@@ -238,6 +254,60 @@ public static class ContextActionUtil
        
        item.AddAttributeBefore(attr, null);
 
+    }
+
+    public static bool HasCallerMemberName(this IParameter parameter)
+    {
+        int i = 0;
+        return false;
+    }
+    
+    public static string? GetPropertyNameFromPropertyChangedInvocation(this IInvocationExpression expression, IMethod notifyChangedMethod)
+    {
+        var classifyNotifierMethodSignature =
+            NotifyPropertyChangedUtil.ClassifyNotifierMethodSignature(notifyChangedMethod);
+
+        if (classifyNotifierMethodSignature == NotifyPropertyChangedUtil.NotifyMethodType.NotNotifier)
+            return null;
+
+        if (classifyNotifierMethodSignature is NotifyPropertyChangedUtil.NotifyMethodType.StringBasedNotifier
+            or NotifyPropertyChangedUtil.NotifyMethodType.SetFieldNotifier)
+        {
+            var argument = expression.Arguments
+                .LastOrDefault(x => x.Kind == ParameterKind.VALUE && x.Value?.Type().IsString() == true);
+            if (argument == null)
+                return null;
+            
+            if (argument.Value is ILiteralExpression { ConstantValue.Kind: ConstantValueKind.String} literalExpression &&
+                literalExpression.ConstantValue.StringValue is { } constantValue)
+            {
+                return constantValue;
+            }
+            else if (argument.Value is IInvocationExpression { ConstantValue.Kind: ConstantValueKind.String } invocation &&
+                     invocation.IsNameofOperator() && invocation.ConstantValue.StringValue is
+                         { } propertyName)
+            {
+                return propertyName;
+            }
+        }
+        else if (classifyNotifierMethodSignature is NotifyPropertyChangedUtil.NotifyMethodType.LambdaBasedNotifier)
+        {
+            if (expression.Arguments.FirstOrDefault()?.Expression is ILambdaExpression lamdaExpression)
+            {
+                if (lamdaExpression.BodyExpression is IReferenceExpression reference)
+                {
+                    return reference.NameIdentifier.Name;
+                }
+            }
+            // This will be lamda based setter. Which we currently do not support
+        }
+        else if (classifyNotifierMethodSignature is NotifyPropertyChangedUtil.NotifyMethodType.LambdaWithParameterNotifier)
+        {
+            // Not handled. I'm not sure which scenarios handles this. But most likely some thing like
+            // OnPropertyChanged<TModel,TType>(Expression<Action
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -398,7 +468,7 @@ public static class ContextActionUtil
 
         if (!declaration.DeclaredElement.IsDescendantOf(observableObject.GetTypeElement()))
         {
-            if (!declaration.SuperTypes.Any(x => TypesUtil.IsClassType(x)))
+            if (!declaration.SuperTypes.Any(x => TypesUtil.IsClassType(x) && x.Classify != TypeClassification.UNKNOWN ))
             {
                 declaration.SetSuperClass(type.GetDeclaredType(classLikeDeclaration));
             }

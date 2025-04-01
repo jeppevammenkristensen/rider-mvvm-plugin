@@ -1,8 +1,10 @@
 using System.Linq;
 using JetBrains.ProjectModel;
+using JetBrains.ReSharper.Feature.Services.Util;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
 using JetBrains.ReSharper.Psi.Files;
 using JetBrains.ReSharper.Psi.Impl.CodeStyle;
 using JetBrains.ReSharper.Psi.Tree;
@@ -12,7 +14,114 @@ using JetBrains.ReSharper.Psi.Xaml.Tree.MarkupExtensions;
 using JetBrains.ReSharper.Psi.Xml.Tree;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.ContextActions;
+using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
+using IFieldDeclaration = JetBrains.ReSharper.Psi.CSharp.Tree.IFieldDeclaration;
+
+
+public static class PropertyExtensions
+{
+    public static void ConvertToAutoProperty(this IPropertyDeclaration propertyDeclaration, CSharpElementFactory factory)
+    {
+        RemoveField(propertyDeclaration);
+        
+        var existingGetter = propertyDeclaration.GetAccessorDeclaration(AccessorKind.GETTER);
+        var newGetter = factory.CreateAccessorDeclaration("get;");
+        if (existingGetter is not null) 
+        {
+            ModificationUtil.ReplaceChild(existingGetter, newGetter);    
+        }
+        else
+        {
+            propertyDeclaration.AddAccessorDeclarationAfter(newGetter, null);
+        }
+                        
+        var existingSetter = propertyDeclaration.GetAccessorDeclaration(AccessorKind.SETTER);
+        var newSetter = factory.CreateAccessorDeclaration("set;");
+                        
+        if (existingSetter is not null)
+        {
+            ModificationUtil.ReplaceChild(existingSetter, newSetter);
+        }
+        else
+        {
+            propertyDeclaration.AddAccessorDeclarationAfter(newSetter, null);
+        }
+    }
+
+    public static void RemoveField(this IPropertyDeclaration property)
+    {
+        IPropertyBodyHelper? propertyBodyService =
+            LanguageManager.Instance.TryGetService<IPropertyBodyHelper>(property.DeclaredElement!
+                .PresentationLanguage);
+
+        if (propertyBodyService?.GetBackingField(property.DeclaredElement!) is {} field)
+        {
+            if (field.GetSingleDeclaration()?.Parent is { } fieldDeclaration)
+            {
+                ModificationUtil.DeleteChild(fieldDeclaration);
+            }
+        }
+        else
+        {
+            var accessor = property.GetAccessorDeclaration(AccessorKind.SETTER);
+            if (accessor is null)
+            {
+                return;
+            }
+            var fieldSearcher = new FieldSearcher();
+            accessor.ProcessDescendants(fieldSearcher);
+            if (fieldSearcher.FieldDeclaration is { } fieldDeclaration)
+            {
+                ModificationUtil.DeleteChild(fieldDeclaration);
+            }
+            
+        }
+    }
+
+    private class FieldSearcher : IRecursiveElementProcessor
+    {
+        public IMultipleFieldDeclaration? FieldDeclaration { get; private set; }
+        
+        public FieldSearcher()
+        {
+            
+        }
+
+        public bool InteriorShouldBeProcessed(ITreeNode element)
+        {
+            return true;
+        }
+
+        public void ProcessBeforeInterior(ITreeNode element)
+        {
+            if (element is IAssignmentExpression assignment)
+            {
+                HandleAssignment(assignment);
+            }
+        }
+
+        private void HandleAssignment(IAssignmentExpression assignment)
+        {
+            if (assignment.Dest is IReferenceExpression referenceExpression && referenceExpression.TryGetReferencedNode<IFieldDeclaration>() is { } fieldDeclaration)
+            {
+                if (fieldDeclaration.Parent is IMultipleFieldDeclaration field)
+                {
+                    FieldDeclaration = field;
+                    ProcessingIsFinished = true;
+                }
+            }
+        }
+
+        public void ProcessAfterInterior(ITreeNode element)
+        {
+            
+        }
+
+        public bool ProcessingIsFinished { get; private set; }
+    }
+}
+
 
 public static class XamlExtensions
 {

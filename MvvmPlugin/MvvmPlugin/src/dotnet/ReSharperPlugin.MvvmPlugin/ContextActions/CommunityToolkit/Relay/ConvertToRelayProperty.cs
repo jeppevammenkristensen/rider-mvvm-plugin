@@ -153,6 +153,10 @@ public class ConvertToRelayProperty : ModernScopedContextActionBase<IPropertyDec
     {
         Regex regex = new("Command$");
         var methodName = regex.Replace(property.NameIdentifier.Name, string.Empty);
+        if (string.IsNullOrWhiteSpace(methodName))
+        {
+            methodName = "Execute";
+        }
 
         var methodDeclaration = CreateMethod(property, methodName);
         context.CommandMethod = classLikeDeclaration.AddClassMemberDeclarationAfter(methodDeclaration,

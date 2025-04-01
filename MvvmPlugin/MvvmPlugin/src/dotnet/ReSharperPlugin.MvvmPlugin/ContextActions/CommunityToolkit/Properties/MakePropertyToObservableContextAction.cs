@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using JetBrains.Application.Progress;
@@ -7,6 +9,7 @@ using JetBrains.ProjectModel.Properties.CSharp;
 using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
+using JetBrains.ReSharper.Feature.Services.Generate;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
@@ -15,6 +18,7 @@ using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
+using JetBrains.Util.Logging;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 
@@ -27,6 +31,8 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     GroupType = typeof(CSharpContextActions))]
 public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
 {
+    private string _property;
+
     /// <summary>
     /// <see cref="ExecutePsiTransaction"/>
     /// </summary>
@@ -38,28 +44,47 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return null;
 
-        var cSharpTypeDeclaration = propertyDeclaration.GetContainingTypeDeclaration();
+        var classLike = ClassLikeDeclarationNavigator.GetByPropertyDeclaration(propertyDeclaration);
+        if (classLike is null)
+            return null;
+
+        MakePropertyToObservableDataContext dataContext = new();
+
+        if (classLike.DeclaredElement is not IClass classElement)
+        {
+            Logger.LogError("Could not convert element to IClass");
+            return null;
+        }
+        
+        //var cSharpTypeDeclaration = propertyDeclaration.GetContainingTypeDeclaration();
         var project = propertyDeclaration.GetProject();
 
-        bool usePartialMethodAproach = false;
+        bool usePartialMethodAproach = propertyDeclaration.CommunityToolkitCanHandlePartialProperties(null);
 
-        if (this.LargerThanOrEqualToVersion84 &&
-            project?.ProjectProperties.ActiveConfigurations.Configurations.FirstOrDefault() is
-                CSharpProjectConfiguration configuration)
+        if (!propertyDeclaration.IsAuto)
         {
-            // If LanguageVersion is preview and targetframeworkId is 9 or more (might change)
-            // we use the approach with declaring a partial property instead of a field
-            // Right now it requires this. It might change in the future
+            dataContext.ShouldConvertToAuto = true;
 
-            if (configuration is
-                {
-                    LanguageVersion: CSharpLanguageVersion.Preview, TargetFrameworkId:
-                    {
-                        Version: {Major: >= 9}
-                    } target
-                } && (target.IsNetCore || target.IsNetCoreApp))
+            // IReadOnlyList<IMethod> notifyMethods =
+            //     NotifyPropertyChangedUtil.GetNotifyMethods(classElement, provider.PsiModule);
+
+            NotifyCollector collector = new();
+            var accessorDeclaration = propertyDeclaration.GetAccessorDeclaration(AccessorKind.SETTER);
+            if (accessorDeclaration is not null)
             {
-                usePartialMethodAproach = true;
+                accessorDeclaration.ProcessDescendants(collector);
+                foreach (var (invocationExpression, method) in collector.Invocations)
+                {
+                    if (NotifyPropertyChangedUtil.ClassifyNotifierMethodSignature(method) != NotifyPropertyChangedUtil.NotifyMethodType.NotNotifier &&
+                        invocationExpression.Arguments.Count > 0)
+                    {
+                        var property = invocationExpression.GetPropertyNameFromPropertyChangedInvocation(method);
+                        if (property == null || property.Equals(propertyDeclaration.NameIdentifier.Name))
+                            continue;
+                        
+                        dataContext.AddNotifyProperty(property);
+                    }
+                }
             }
         }
 
@@ -70,18 +95,29 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
             {
                 // This will ensure that the containing class is partial and if possible
                 // inherits from ObservableObject
-                if (!cSharpTypeDeclaration.EnsurePartialAndInheritsObservableObject(observableObject,
+                if (!classLike.EnsurePartialAndInheritsObservableObject(observableObject,
                         supressObservableObjectNotFound: false))
                     return null;
 
                 // Get the factory we will use to generate a field
-                var factory = CSharpElementFactory.GetInstance(provider.GetSelectedTreeNode<ICSharpFile>()!);
-
+                var factory = provider.ElementFactory;
+                
                 if (usePartialMethodAproach)
                 {
                     propertyDeclaration.SetPartial(true);
                     propertyDeclaration.AddAttributeBefore(
                         factory.CreateAttribute(observableProperty.GetTypeElement()!), null);
+                    if (dataContext.ShouldConvertToAuto)
+                    {
+                        propertyDeclaration.ConvertToAutoProperty(factory);
+                    }
+
+                    foreach (var property in dataContext.NotifyProperties)
+                    {
+                        propertyDeclaration.AddNotifyPropertyChangedAttribute(property,factory);
+                    }
+                    
+                    
                     return null;
                 }
 
@@ -89,7 +125,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
                 // The property should have a summary with a cref to the property that is generated behind
                 // it will also be decorated with the ObservableProperty attribute
 
-                var field = BuildField(factory, propertyDeclaration, observableProperty);
+                var field = BuildField(factory, propertyDeclaration, observableProperty, dataContext);
 
                 // We retrieve the parent. this will ensure that the output will be 
                 // with attributes, documents etc. If we only use the field declaration it will something like
@@ -106,8 +142,43 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         return null;
     }
 
+    private class NotifyCollector : IRecursiveElementProcessor
+    {
+        public List<(IInvocationExpression, IMethod)> Invocations { get; private set; } = new();
+        
+        public bool InteriorShouldBeProcessed(ITreeNode element)
+        {
+            return true;
+        }
+
+        public void ProcessBeforeInterior(ITreeNode element)
+        {
+            switch (element)
+            {
+                case IInvocationExpression invocationExpression:
+                    ProcessInvocation(invocationExpression);
+                    break;
+            }
+        }
+
+        private void ProcessInvocation(IInvocationExpression invocationExpression)
+        {
+            if (invocationExpression.Reference.Resolve().DeclaredElement is IMethod method)
+            {
+                Invocations.Add((invocationExpression,method));    
+            }
+            
+        }
+
+        public void ProcessAfterInterior(ITreeNode element)
+        {
+        }
+
+        public bool ProcessingIsFinished { get; private set; }
+    }
+
     private IFieldDeclaration BuildField(CSharpElementFactory factory, IPropertyDeclaration propertyDeclaration,
-        IDeclaredType observableProperty)
+        IDeclaredType observableProperty, MakePropertyToObservableDataContext dataContext)
     {
         var builder = new StringBuilder();
 
@@ -151,6 +222,11 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         {
             field.SetInitial(initializer);
         }
+        
+        foreach (var property in dataContext.NotifyProperties)
+        {
+            field.AddNotifyPropertyChangedAttribute(property,factory);
+        }
 
         return field;
     }
@@ -184,5 +260,17 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
         return true;
     }
 
+    private class MakePropertyToObservableDataContext
+    {
+        public ImmutableArray<string> NotifyProperties { get; private set; } = ImmutableArray<string>.Empty;
+        public bool ShouldConvertToAuto { get; set; }
+
+        public void AddNotifyProperty(string propertyName)
+        {
+            NotifyProperties = NotifyProperties.Add(propertyName);
+        }
+
+    }
+    
     private bool LargerThanOrEqualToVersion84 { get; set; }
 }

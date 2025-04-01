@@ -6,6 +6,7 @@ build
 output
 .gradle
 .tmp
+*.lock
 
 # User-specific files
 *.suo
