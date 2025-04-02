@@ -22,6 +22,8 @@ public static class TypeConstants
     public static readonly ClrTypeNameWrapper
         ObservableObject = "CommunityToolkit.Mvvm.ComponentModel.ObservableObject";
 
+    public static readonly ClrTypeNameWrapper ICommand = "System.Windows.Input.ICommand";
+
     public static readonly ClrTypeNameWrapper ObservableRecipient =
         "CommunityToolkit.Mvvm.ComponentModel.ObservableRecipient";
 

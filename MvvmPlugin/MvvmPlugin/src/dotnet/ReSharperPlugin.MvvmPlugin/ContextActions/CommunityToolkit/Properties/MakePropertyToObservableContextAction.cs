@@ -73,7 +73,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
             if (accessorDeclaration is not null)
             {
                 accessorDeclaration.ProcessDescendants(collector);
-                foreach (var (invocationExpression, method) in collector.Invocations)
+                foreach (var (invocationExpression, method) in collector.NotifyInvocations)
                 {
                     if (NotifyPropertyChangedUtil.ClassifyNotifierMethodSignature(method) != NotifyPropertyChangedUtil.NotifyMethodType.NotNotifier &&
                         invocationExpression.Arguments.Count > 0)
@@ -84,6 +84,11 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
                         
                         dataContext.AddNotifyProperty(property);
                     }
+                }
+                
+                foreach (var canExecuteCommandName in collector.CanExecuteCommands)
+                {
+                    propertyDeclaration.AddCanExecuteChangedForAttribute(canExecuteCommandName, provider.ElementFactory);
                 }
             }
         }
@@ -144,7 +149,8 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
 
     private class NotifyCollector : IRecursiveElementProcessor
     {
-        public List<(IInvocationExpression, IMethod)> Invocations { get; private set; } = new();
+        public List<(IInvocationExpression, IMethod)> NotifyInvocations { get; private set; } = new();
+        public HashSet<string> CanExecuteCommands { get; private set; } = new();
         
         public bool InteriorShouldBeProcessed(ITreeNode element)
         {
@@ -161,13 +167,37 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
             }
         }
 
+        private static string[] CanExecuteNames = ["NotifyCanExecuteChanged", "RaiseCanExecuteChanged"];
+ 
         private void ProcessInvocation(IInvocationExpression invocationExpression)
         {
             if (invocationExpression.Reference.Resolve().DeclaredElement is IMethod method)
             {
-                Invocations.Add((invocationExpression,method));    
+                var result = NotifyPropertyChangedUtil.ClassifyNotifierMethodSignature(method);
+                if (result == NotifyPropertyChangedUtil.NotifyMethodType.NotNotifier)
+                {
+                    // Note. This can result in false positives on rare occasion as we basically "only" check
+                    // if the containing type of the method is an ICommand (for instance NotityCanExecuteChanged is only
+                    // available on IRelayCommand. 
+                    if (method.ContainingType?.IsDescendantOf(TypeConstants.ICommand.GetDeclaredType(invocationExpression).GetTypeElement()) == true)
+                    {
+                        // Check if the method name is in the list of CanExecuteNames 
+                        if (CanExecuteNames.Contains(method.ShortName))
+                        {
+                            // Traverse up the invocation expression to find the top most reference. 
+                            // For SomeCommand.NotifyCanExecuteChanged() that would be SomeCommand
+                            if (invocationExpression.ReferencePath().LastOrDefault() is { } res)
+                            {
+                                CanExecuteCommands.Add(res.NameIdentifier.Name); }
+                            
+                        }
+                    }
+                }
+                else
+                {
+                    NotifyInvocations.Add((invocationExpression,method));        
+                }
             }
-            
         }
 
         public void ProcessAfterInterior(ITreeNode element)

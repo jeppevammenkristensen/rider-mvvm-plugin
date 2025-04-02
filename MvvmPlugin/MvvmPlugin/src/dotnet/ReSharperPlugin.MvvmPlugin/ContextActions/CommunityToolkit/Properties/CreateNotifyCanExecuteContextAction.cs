@@ -106,12 +106,7 @@ public class CreateNotifyCanExecuteContextAction(ICSharpContextActionDataProvide
         protected override Action<ITextControl> ExecutePsiTransaction(IClassMemberDeclaration availabilityInfo, ISolution solution,
             IProgressIndicator progress)
         {
-            var notifyCanExecuteChangedFor = PluginUtil.GetNotifyCanExecuteChangedFor(availabilityInfo);
-            var attribute = provider.ElementFactory.CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement());
-            attribute.AddArgumentAfter(provider.ElementFactory.CreateArgument(ParameterKind.VALUE,
-                provider.ElementFactory.CreateExpression($"nameof({name})")), null);
-            
-            availabilityInfo.AddAttributeBefore(attribute, availabilityInfo.Attributes.LastOrDefault());
+            availabilityInfo.AddCanExecuteChangedForAttribute(name, provider.ElementFactory);
             return null;
         }
     }

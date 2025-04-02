@@ -6,34 +6,20 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ReSharperPlugin.MvvmPlugin.Tests.test.data.ConvertToRelayTest;
 
-public partial class FirstTest : ObservableObject
+public partial class NotifyPropertyChangedTest : ObservableObject
 {
-    private string _someProperty;
-    
-    public string OtherProperty { get; set; }
+  public string OtherProperty { get; set; }
     public string AnotherProperty { get; set; }
     
     public string ThirdProperty { get; set; }
     
-    public string Some{caret}Property 
-    { 
-        get
-        {
-            return _someProperty;
-        } 
-        set
-        {
-            _someProperty = value;
-            OnPropertyChanged(nameof("SomeProperty"));
-            OnPropertyChanged(nameof(OtherProperty));
-            OnPropertyChanged("AnotherProperty"));
-            SetProperty(ref field, value);
-            OnPropertyChanged(() => ThirdProperty);
-            OnPropertyChanged<FirstTest>(t => t.ForthProperty);
+    [NotifyPropertyChangedFor(nameof(OtherProperty))]
+    [NotifyPropertyChangedFor(nameof(AnotherProperty))]
+    [NotifyPropertyChangedFor(nameof(ThirdProperty))]
+    [NotifyPropertyChangedFor(nameof(ForthProperty))]
+    [ObservableProperty]
+    public partial string Some{caret}Property { get; set; }
 
-        }
-    }
-    
     protected void OnPropertyChanged<T>(
         Expression<Func<T>> expression)
     {

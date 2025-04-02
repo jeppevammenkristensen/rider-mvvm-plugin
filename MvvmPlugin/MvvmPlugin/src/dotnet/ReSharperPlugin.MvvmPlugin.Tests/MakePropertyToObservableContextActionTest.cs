@@ -1,11 +1,5 @@
-using System;
-using JetBrains.ProjectModel;
-using JetBrains.ProjectModel.Properties;
-using JetBrains.ProjectModel.Properties.CSharp;
-using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.FeaturesTestFramework.Intentions;
 using JetBrains.ReSharper.Psi.CSharp;
-using JetBrains.ReSharper.Psi.CSharp.Impl;
 using JetBrains.ReSharper.TestFramework;
 using NUnit.Framework;
 using ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
@@ -22,7 +16,10 @@ public class MakePropertyToObservableContextActionTest : CSharpContextActionExec
     protected override string RelativeTestDataPath => nameof(MakePropertyToObservableContextActionTest);
 
     [Test]
-    public void FirstTest() => DoNamedTest();
+    public void NotifyPropertyChangedTest() => DoNamedTest();
+
+    [Test]
+    public void CanExecuteChangedFor() => DoNamedTest();
 
 }
 

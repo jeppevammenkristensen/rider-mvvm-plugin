@@ -128,6 +128,17 @@ public static class ContextActionUtil
         propertyDeclaration.AddAttributeBefore(attribute, propertyDeclaration.Attributes.LastOrDefault());
     }
 
+    public static void AddCanExecuteChangedForAttribute(this IClassMemberDeclaration propertyDeclaration, string name,
+        CSharpElementFactory factory)
+    {
+        var notifyCanExecuteChangedFor = PluginUtil.GetNotifyCanExecuteChangedFor(propertyDeclaration);
+        var attribute = factory .CreateAttribute(notifyCanExecuteChangedFor.GetTypeElement());
+        attribute.AddArgumentAfter(factory.CreateArgument(ParameterKind.VALUE,
+            factory.CreateExpression($"nameof({name})")), null);
+            
+        propertyDeclaration.AddAttributeBefore(attribute, propertyDeclaration.Attributes.LastOrDefault());
+    }
+
     public static bool IsPartialPropertyFriendlyTargetFramework(this CSharpProjectConfiguration? configuration)
     {
         if (configuration?.TargetFrameworkId is not {} target)
@@ -309,6 +320,20 @@ public static class ContextActionUtil
 
         return null;
     }
+
+    public static IEnumerable<IReferenceExpression> ReferencePath(this IInvocationExpression expression)
+    {
+        var reference = expression.ConditionalQualifier as IReferenceExpression;
+        
+        while (reference != null)
+        {
+            yield return reference;
+            
+            reference = reference.QualifierExpression as IReferenceExpression;
+        }
+    }
+    
+    
 
     /// <summary>
     ///  Gets the property name for the declaration. If it's a field decorated with the
