@@ -1,0 +1,14 @@
+﻿<Solution>
+  <Folder Name="/misc/">
+    <File Path="src\dotnet\Plugin.props" />
+    <File Path="README.md" />
+    <File Path="CHANGELOG.md" />
+    <File Path="src\rider\main\resources\META-INF\plugin.xml" />
+    <File Path="src\rider\main\resources\liveTemplates\Mvvm.xml" />
+    <File Path="build.gradle.kts" />
+    <File Path="gradle.properties" />
+  </Folder>
+  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin.Tests\ReSharperPlugin.MvvmPlugin.Tests.csproj" Type="Classic C#" />
+  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.csproj" Type="Classic C#" />
+  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.Rider.csproj" Type="Classic C#" />
+</Solution>
