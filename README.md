@@ -13,6 +13,20 @@ From a view (for instance a Window or Page etc.) a context action is available t
 
 ![CreateModelV2](https://github.com/user-attachments/assets/093f9ff9-784b-45b4-96a6-db982ddea21b)
 
+#### Creation logic
+
+When creating the ViewModel the structure of the View will be taken into consideration. For instance path `Views\Subfolder\UserControl.xaml` will result in a view model created at `ViewModels\Subfolder\UserControlViewModel.cs`. If the view is not inside the Views folder the whole structure will be used. For instance `OtherFolder\SecondUserControl.xaml` will generate `ViewModels\OtherFolder\SecondUserControlViewModel.cs`
+
+The default options for creation are
+
+* View folder is `Views`
+* ViewModels folder is `ViewModels`
+
+You can change these values in the options page. The option page also supports generating view models at the same location as the view. If you check Use same folder for view model and view it `Views\UserControl1\UserControl.xaml` will generate `Views\UserControl1\UserControlViewModel.cs`
+
+![image](https://github.com/user-attachments/assets/da50fe97-6b67-4251-ba6b-72005cb69740)
+
+
 
 ### Navigate to View
 
