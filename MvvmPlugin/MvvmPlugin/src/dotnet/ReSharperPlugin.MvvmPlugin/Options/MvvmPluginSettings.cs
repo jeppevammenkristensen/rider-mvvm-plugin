@@ -18,12 +18,13 @@ public class MvvmPluginSettings
 
     [SettingsEntry(DefaultValue: "ViewModelBase", Description: "Property names defined as model base")]
     public string OtherValuesString { get; set; }
-}
-
-public enum ObservableObjectBaseType
-{
-    Object,
-    Validator,
-    Recipient,
-    Other
+    
+    [SettingsEntry(DefaultValue: "ViewModels", Description: "Root folder for view models")]
+    public string ViewModelsFolder { get; set; }
+    
+    [SettingsEntry(DefaultValue: "Views", Description: "Root folder for views")]
+    public string ViewsFolder { get; set; }
+    
+    [SettingsEntry(DefaultValue: false, Description: "If set to true. The view model will be created in the same folder as the view")]
+    public bool UseSameFolderForViewModel { get; set; }
 }
