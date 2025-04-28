@@ -48,8 +48,6 @@ public class MvvmPluginOptionsPage : BeSimpleOptionsPage
         AddText("These are options for the Mvvm Plugin");
         AddSpacer();
         AddCommentText("Values are saved in a .dotSettings file.");
-        
-        
 
         AddHeader("CommunityToolkit Options");
 
@@ -67,8 +65,14 @@ public class MvvmPluginOptionsPage : BeSimpleOptionsPage
         AddCommentText("If you choose Other, then when making an object observable the code will look for a base class that matches the names defined below (seperated by , ) ");
         
         AddTextBox((MvvmPluginSettings x) => x.OtherValuesString, "Names of base classes (case insensitive)");
+
+        AddHeader("View model generation");
         
-        
+        AddTextBox((MvvmPluginSettings x) => x.ViewModelsFolder, "Folder where for view models are generated");
+        AddTextBox((MvvmPluginSettings x) => x.ViewsFolder, "Folder where for views are generated");
+        AddBoolOption((MvvmPluginSettings x) => x.UseSameFolderForViewModel, "Use same folder for view model and view");
+
+
         // AddComboEnum((SampleSettings x) => x.ComboSelection, "Combo enum value", x => x.ToString());
         //
         // // var property = new Property<string>(lifetime, $"{nameof(SampleSettings)}:{nameof(SampleSettings.FolderPath)}");

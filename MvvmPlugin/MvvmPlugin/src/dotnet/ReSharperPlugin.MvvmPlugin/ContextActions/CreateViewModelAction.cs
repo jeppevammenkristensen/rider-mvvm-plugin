@@ -34,6 +34,7 @@ using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Models;
+using ReSharperPlugin.MvvmPlugin.Options;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions;
 
@@ -43,6 +44,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions;
     GroupType = typeof(XamlContextActions))]
 public class CreateViewModelAction(XamlContextActionDataProvider provider) : IContextAction
 {
+    
     private static readonly Regex MatchViewRegex = new("View$", RegexOptions.IgnoreCase);
 
 //     protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
@@ -299,11 +301,6 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
         {
             if (Kind == null)
                 return;
-            // // currently only Avalonia is supported
-            // if (Kind != DesktopKind.Avalonia)
-            //     return null; 
-
-            // Get the selected XAML file
 
 
             using (ReadLockCookie.Create())
@@ -311,6 +308,10 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
             {
                 IPsiSourceFile? newFile;
                 int? caretPosition;
+                
+                var settings = _provider.Solution.GetSettingsStore();
+                var viewModelGenerationOptions = MvvmPluginSettingsRetriever.GetViewModelGenerationOptions(settings);
+
                 using (var cookie = solution.CreateTransactionCookie(DefaultAction.Rollback, this.Text,
                            NullProgressIndicator.Create()))
                 {
@@ -322,43 +323,23 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
                     // Get the name of the xaml file. For instance SomeView.xaml would become SomeView 
                     var name = xamlFile.GetSourceFile().GetLocation().NameWithoutExtension;
 
-                    // If the view ends with View that part
+                    // If the view ends with View that part is replaced
                     var viewName = $"{MatchViewRegex.Replace(name, string.Empty)}ViewModel";
 
                     var project = xamlFile.GetProject();
                     if (project == null)
                         return;
-
-
-                    // Try to locate a ViewModelsFolder
-                    var viewModelsFolder = project.GetSubFolders()
-                        .FirstOrDefault(x => x.Location.Name == "ViewModels");
-                    IProjectFolder? projectFolder;
-
-                    // Note: This logic needs to be refined so in the case where a view is nested
-                    // For instance Views\SomeFolder\Someview.xaml the SomeFolder will be added
-                    // and in cases where the view is not in a view folder it will either find the toplevel folder
-                    // for instance UserControls\SomeView. But that will be along the way. It's to easy to over complicate
-                    // things so early. Especially with the current experience level with Rider development
-
-                    // If none is matched we set the projectFolder to that one
-                    if (viewModelsFolder == null)
-                    {
-                        var newFolder = project.Location.Combine("ViewModels");
-                        projectFolder = project.GetOrCreateProjectFolder(newFolder);
-                    }
-                    // Otherwise set the project folder to the matched value
-                    else
-                    {
-                        projectFolder = project.GetOrCreateProjectFolder(viewModelsFolder.Location);
-                    }
-
-                    if (projectFolder == null)
+                    
+                    var rootDestinationFolder = EnsureViewModelsFolder(xamlFile, viewModelGenerationOptions);;
+                    
+                    if (rootDestinationFolder == null)
                     {
                         return;
                     }
 
-                    var filePath = projectFolder.NotNull().Location.Combine($"{viewName}.cs");
+                    rootDestinationFolder = CreateDestinationFolder(rootDestinationFolder, xamlFile, viewModelGenerationOptions);
+
+                    var filePath = rootDestinationFolder.NotNull().Location.Combine($"{viewName}.cs");
                     bool fileExist = filePath.ExistsFile;
 
                     var psiServices = solution.GetPsiServices();
@@ -368,7 +349,7 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
                         //var symbolsService = xamlFile.GetPsiServices().Symbols;
 
                         // Load the existing file as a CSharp source file
-                        var matchedFile = projectFolder.GetSubFiles()
+                        var matchedFile = rootDestinationFolder.GetSubFiles()
                             .FirstOrDefault(sf => sf.Name.Equals($"{viewName}.cs", StringComparison.OrdinalIgnoreCase));
 
                         if (matchedFile == null)
@@ -380,7 +361,7 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
                     {
                         // using (provider.Solution.CreateTransactionCookie(DefaultAction.Commit, "Create new file",
                         //            NullProgressIndicator.Create()))
-                        newFile = AddNewItemHelper.AddFile(projectFolder, $"{viewName}.cs").ToSourceFile();
+                        newFile = AddNewItemHelper.AddFile(rootDestinationFolder, $"{viewName}.cs").ToSourceFile();
                         // Create the new csharp file
 
                     }
@@ -471,12 +452,102 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
             //}
         }
 
+        private static IProjectFolder? EnsureViewModelsFolder(IXamlFile project, ViewModelGenerationOptions generationOptions)
+        {
+            // Note the default passed in here will be ViewModels
+            if (generationOptions.UseSameFolderForViewModel)
+            {
+                return project.GetSourceFile()?.ToProjectFile()?.ParentFolder;
+            }
+            
+            
+            var viewModelFolders = generationOptions.GetViewModelFolders();
+            IProjectFolder result = project.GetProject() ?? throw new InvalidOperationException("Failed to retrieve project");
+
+            foreach (var viewModelFolder in viewModelFolders)
+            {
+                var path = result!.Location.CombineWithShortName(viewModelFolder);
+                result = result!.GetOrCreateProjectFolder(path) ??
+                         throw new InvalidOperationException($"Failed to create subfolder {path}");
+            }
+            
+            return result;
+        }
+
+        private IProjectFolder CreateDestinationFolder(IProjectFolder destinationRootFolder, IXamlFile xamlFile,
+            ViewModelGenerationOptions viewModelGenerationOptions)
+        {
+            // If we should use the same folder. No need for checks just return the destinationRootFolder
+            
+            if (viewModelGenerationOptions.UseSameFolderForViewModel)
+                return destinationRootFolder;
+            
+            IProjectFile? fileLocation = xamlFile.GetSourceFile().ToProjectFile();
+            var parentDirectories = FindRoot(fileLocation.GetParentFolders(), viewModelGenerationOptions);
+
+            var currentFolder = destinationRootFolder;
+            
+            foreach (var parentDirectory in parentDirectories)
+            {
+                var currentName = parentDirectory.Name;
+                
+                var newFolder = currentFolder.Location.CombineWithShortName(currentName);
+                currentFolder = currentFolder.GetOrCreateProjectFolder(newFolder);
+            }
+            
+            
+            
+            return currentFolder;
+        }
+
+        private IReadOnlyList<IProjectFolder> FindRoot(IEnumerable<IProjectFolder> folders,
+            ViewModelGenerationOptions viewModelGenerationOptions)
+        {
+            List<IProjectFolder> result = new();
+            var viewFolders = viewModelGenerationOptions.GetViewFolders();
+            var length = viewFolders.Length;
+            IProjectFolder[] foldersArray = folders.ToArray();
+
+
+            for (var index = 0; index < foldersArray.Length; index++)
+            {
+                var projectFolder = foldersArray[index];
+                if (projectFolder is IProject)
+                {
+                    break;
+                }
+
+                if (projectFolder.Name == viewFolders[length - 1])
+                {
+                    if (viewFolders.Length == 1)
+                        break;
+                    // If it's ["Nested", "Folder"] we check if 
+                    
+                    var candidate = foldersArray
+                        .Skip(index)
+                        .Take(length)
+                        .Select(x => x.Name)
+                        .Reverse().ToArray();
+                    
+                    if (candidate.SequenceEqual(viewFolders, StringComparer.OrdinalIgnoreCase))
+                    {
+                        break;
+                    }
+                }
+
+                result.Add(projectFolder);
+            }
+
+            result.Reverse();
+            return result;
+        }
+
         public string Text => "Create ViewModel";
 
         private void GenerateXamlViewModelAttributes(IXamlFile xamlFile, string nspath, string viewName)
         {
             var xamlFactory = XamlElementFactory.GetInstance(xamlFile, true);
-            // Get the type declaration (will be for instance the root <Window> or <UserControl>
+            // Get the type declaration (could be the root <Window> or <UserControl>
             var xamlTypeDeclaration = xamlFile.GetTypeDeclarations().ToList().FirstOrDefault();
 
             if (xamlTypeDeclaration is null)
@@ -518,8 +589,11 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
                     .LastOrDefault());
 
                 // Try to format it (not working as I would want right now)
-                var codeFormatter = ModificationUtil.GetCodeFormatter(xamlFile.Language.LanguageService());
-                codeFormatter.Format(xamlFile, CodeFormatProfile.GENERATOR);
+                if (ModificationUtil.GetCodeFormatter(xamlFile.Language.LanguageService()) is { } codeFormatter)
+                {
+                    codeFormatter.Format(xamlFile, CodeFormatProfile.GENERATOR);    
+                }
+                
             }
             else if (Kind.SupportedPlatformEnum is SupportedXamlPlatform.WPF)
             {
@@ -538,9 +612,18 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
         private XamlPlatformWrapper? Kind { get; }
         private bool IsWinUI => Kind?.SupportedPlatformEnum == SupportedXamlPlatform.WINUI;
         
+        /// <summary>
+        /// If the xaml platform in WINUI we declare a ViewModel property in the code behind
+        /// 
+        /// </summary>
+        /// <param name="xamlFile"></param>
+        /// <param name="newFile"></param>
         private void SetViewModelIfWinUI(IXamlFile xamlFile, IPsiSourceFile? newFile)
         {
             if (Kind == null)
+                return;
+
+            if (newFile == null)
                 return;
         
             if (Kind.SupportedPlatformEnum == SupportedXamlPlatform.WINUI)
