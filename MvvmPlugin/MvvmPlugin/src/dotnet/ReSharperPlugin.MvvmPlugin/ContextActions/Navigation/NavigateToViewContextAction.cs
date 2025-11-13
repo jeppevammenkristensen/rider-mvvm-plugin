@@ -122,6 +122,7 @@ public class NavigateToViewContextAction : ContextActionBase
         return false;
     }
 
+#if RIDER
     private static async Task ShowProjectFile(ISolution solution, IProjectFile file,
         int? caretPosition)
     {
@@ -133,6 +134,7 @@ public class NavigateToViewContextAction : ContextActionBase
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
         }
     }
+#endif
 
     protected IProjectFile? MatchedProjectFile { get; set; }
 }

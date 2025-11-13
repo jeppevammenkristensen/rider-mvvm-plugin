@@ -40,7 +40,8 @@ public static class ContextActionUtil
 
         return null;
     }
-    
+
+#if RIDER
     public static async Task ShowProjectFile(ISolution solution, IProjectFile file,
         int? caretPosition)
     {
@@ -52,6 +53,7 @@ public static class ContextActionUtil
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
         }
     }
+#endif
 
     /// <summary>
     /// It's required that the csharp language version is at least 8 to support CommunityToolkit.Mvvm Source generators

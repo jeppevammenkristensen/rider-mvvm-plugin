@@ -270,11 +270,12 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
 
         return false;
     }
-    
-    
-    
-   
-    
+
+
+
+
+
+#if RIDER
     private static async Task ShowProjectFile(ISolution solution, IProjectFile file,
         int? caretPosition)
     {
@@ -286,6 +287,7 @@ public class CreateViewModelAction(XamlContextActionDataProvider provider) : ICo
             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
         }
     }
+#endif
 
     private class CreateViewModelAndUpdateXamlAction : IBulbAction
     {
