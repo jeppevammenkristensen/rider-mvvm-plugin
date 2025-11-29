@@ -8,6 +8,7 @@ using JetBrains.Diagnostics;
 using JetBrains.DocumentManagers.impl;
 using JetBrains.DocumentManagers.Transactions;
 using JetBrains.IDE;
+using JetBrains.IDE.Common;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Bulbs;
 using JetBrains.ReSharper.Feature.Services.ContextActions;

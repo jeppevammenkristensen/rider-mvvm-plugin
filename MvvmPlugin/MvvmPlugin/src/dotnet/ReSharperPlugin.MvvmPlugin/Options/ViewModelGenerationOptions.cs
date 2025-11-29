@@ -3,8 +3,15 @@ using System.Linq;
 
 namespace ReSharperPlugin.MvvmPlugin.Options;
 
-public record ViewModelGenerationOptions(string ViewModelFolder, string ViewFolder, bool UseSameFolderForViewModel)
+public class ViewModelGenerationOptions
 {
+    public ViewModelGenerationOptions(string viewModelFolder, string viewFolder, bool useSameFolderForViewModel)
+    {
+        ViewModelFolder = viewModelFolder;
+        ViewFolder = viewFolder;
+        UseSameFolderForViewModel = useSameFolderForViewModel;
+    }
+
     public string[] GetViewModelFolders()
     {
         return ViewModelFolder.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries)
@@ -16,4 +23,8 @@ public record ViewModelGenerationOptions(string ViewModelFolder, string ViewFold
         return ViewFolder.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries)
             .Select(x => x.Trim()).ToArray();
     }
+
+    public string ViewModelFolder { get; private set; }
+    public string ViewFolder { get; private set; }
+    public bool UseSameFolderForViewModel { get; private set; }
 }

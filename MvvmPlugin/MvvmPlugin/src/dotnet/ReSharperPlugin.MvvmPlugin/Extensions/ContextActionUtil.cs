@@ -41,19 +41,19 @@ public static class ContextActionUtil
         return null;
     }
 
-#if RIDER
-    public static async Task ShowProjectFile(ISolution solution, IProjectFile file,
-        int? caretPosition)
-    {
-        var editor = solution.GetComponent<IEditorManager>();
-        var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
-
-        if (caretPosition != null)
-        {
-            textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
-        }
-    }
-#endif
+// #if RIDER
+//     public static async Task ShowProjectFile(ISolution solution, IProjectFile file,
+//         int? caretPosition)
+//     {
+//         var editor = solution.GetComponent<IEditorManager>();
+//         var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
+//
+//         if (caretPosition != null)
+//         {
+//             textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
+//         }
+//     }
+// #endif
 
     /// <summary>
     /// It's required that the csharp language version is at least 8 to support CommunityToolkit.Mvvm Source generators
@@ -112,11 +112,34 @@ public static class ContextActionUtil
             return false;
         }
 
-        return communityToolkitType.Assembly?.Version >=
-               new Version(8,
-                   4) &&
-               treeNode.GetCSharpProjectConfiguration() is {LanguageVersion: CSharpLanguageVersion.Preview} config &&
-               config.IsPartialPropertyFriendlyTargetFramework();
+        if (communityToolkitType.Assembly?.Version >= new Version(4, 8))
+        {
+            if (treeNode.GetCSharpProjectConfiguration() is { } config)
+            {
+                if (config.LanguageVersion == CSharpLanguageVersion.Preview)
+                {
+                    if (config.IsPartialPropertyFriendlyTargetFramework())
+                    {
+                        return true;
+                    }    
+                }
+                else
+                {
+                    if (communityToolkitType.Assembly.Version > new Version(8, 4))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+        
+        // return communityToolkitType.Assembly?.Version >=
+        //        new Version(8,
+        //            4) &&
+        //        treeNode.GetCSharpProjectConfiguration() is {LanguageVersion: CSharpLanguageVersion.Preview} config &&
+        //        config.IsPartialPropertyFriendlyTargetFramework();
 
     }
 
@@ -141,6 +164,11 @@ public static class ContextActionUtil
         propertyDeclaration.AddAttributeBefore(attribute, propertyDeclaration.Attributes.LastOrDefault());
     }
 
+    /// <summary>
+    /// Determines whether the provided CSharp project configuration is compatible with partial properties.
+    /// </summary>
+    /// <param name="configuration">The CSharp project configuration to be checked.</param>
+    /// <returns>True if the target framework is partial property friendly, otherwise false.</returns>
     public static bool IsPartialPropertyFriendlyTargetFramework(this CSharpProjectConfiguration? configuration)
     {
         if (configuration?.TargetFrameworkId is not {} target)

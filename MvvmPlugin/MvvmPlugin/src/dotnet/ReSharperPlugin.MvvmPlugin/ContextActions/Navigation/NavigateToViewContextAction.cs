@@ -122,19 +122,5 @@ public class NavigateToViewContextAction : ContextActionBase
         return false;
     }
 
-#if RIDER
-    private static async Task ShowProjectFile(ISolution solution, IProjectFile file,
-        int? caretPosition)
-    {
-        var editor = solution.GetComponent<IEditorManager>();
-        var textControl = await editor.OpenProjectFileAsync(file, OpenFileOptions.DefaultActivate);
-        
-        if (caretPosition != null)
-        {
-            textControl?.Caret.MoveTo(caretPosition.Value, CaretVisualPlacement.DontScrollIfVisible);
-        }
-    }
-#endif
-
     protected IProjectFile? MatchedProjectFile { get; set; }
 }
