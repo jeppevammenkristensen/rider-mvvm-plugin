@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 1.1.1
-- Necesarry upgrade to better support Resharper. Adjustments to Community Toolkit property generation
+## 1.2.0
+- Necesarry upgrade to better support Resharper. Adjustments to Community Toolkit property generation. Fixed faulty analysis check for dotnet 9 or larger
 
 ## 1.1.0
 - Create View Model action enhancements to use folder better. Added options to control root Views and ViewModels folder and support for creating viewmodel in same location as view
