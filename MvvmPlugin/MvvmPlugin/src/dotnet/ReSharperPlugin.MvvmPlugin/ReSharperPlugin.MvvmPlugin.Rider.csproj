@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <Import Project="$(JetBrainsRiderSdkReference)" Condition="Exists('$(JetBrainsRiderSdkReference)')" />
+
     <PropertyGroup>
         <TargetFramework>net472</TargetFramework>
         <AssemblyName>ReSharperPlugin.MvvmPlugin</AssemblyName>
@@ -10,7 +12,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Rider.SDK" Version="$(SdkVersion)"/>
         <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     </ItemGroup>
 

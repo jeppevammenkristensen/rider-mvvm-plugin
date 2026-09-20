@@ -18,6 +18,17 @@
 
   <Import Project="Plugin.props" />
 
+  <Import Project="$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props')" />
+
+  <PropertyGroup>
+    <JetBrainsRiderSdkReference>$(DotNetSdkPath)\Build\PackageReference.JetBrains.Rider.SDK.Props</JetBrainsRiderSdkReference>
+  </PropertyGroup>
+
+  <Target BeforeTargets="CoreCompile" Name="CheckForGradlePrepared" Condition="!Exists('$(JetBrainsRiderSdkReference)')">
+    <Error Text="Please run './gradlew prepare' before building the .NET solution." />
+  </Target>
+
   <PropertyGroup>
     <WaveVersion>$(SdkVersion.Substring(2,2))$(SdkVersion.Substring(5,1)).0.0</WaveVersion>
   </PropertyGroup>
