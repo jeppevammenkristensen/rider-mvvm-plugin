@@ -2,6 +2,9 @@ import com.jetbrains.plugin.structure.base.utils.isFile
 import groovy.ant.FileNameFinder
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.intellij.platform.gradle.Constants
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 import java.io.ByteArrayOutputStream
 
 // To access libs values go to the libs.versions.toml file
@@ -150,10 +153,26 @@ dependencies {
         rider(ProductVersion, useInstaller=false)
         jetbrainsRuntime()
         instrumentationTools()
+        pluginVerifier(libs.intellijPluginVerifierCli.map { it.version!! })
+        testFramework(TestFrameworkType.Bundled)
 
         // TODO: add plugins
         // bundledPlugin("uml")
         // bundledPlugin("com.jetbrains.ChooseRuntime:1.0.9")
+    }
+}
+
+intellijPlatform {
+    pluginVerification {
+        failureLevel.add(VerifyPluginTask.FailureLevel.DEPRECATED_API_USAGES)
+        ides {
+            create(IntelliJPlatformType.Rider, libs.versions.riderSdk) {
+                useInstaller = false
+            }
+            create(IntelliJPlatformType.Rider, libs.versions.riderSdkPreview) {
+                useInstaller = false
+            }
+        }
     }
 }
 
@@ -208,6 +227,22 @@ tasks.publishPlugin {
             workingDir(rootDir)
         }
     }
+}
+
+tasks.check {
+    dependsOn(tasks.verifyPlugin)
+}
+
+val testRiderPreview by intellijPlatformTesting.testIde.registering {
+    version = libs.versions.riderSdkPreview
+    useInstaller = false
+    task {
+        enabled = libs.versions.riderSdk.get() != libs.versions.riderSdkPreview.get()
+    }
+}
+
+tasks.check {
+    dependsOn(testRiderPreview)
 }
 
 val riderModel: Configuration by configurations.creating {

@@ -1,0 +1,62 @@
+name: Build and verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      DOTNET_NOLOGO: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    defaults:
+      run:
+        working-directory: MvvmPlugin/MvvmPlugin
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build, test, and verify
+        run: ./gradlew --no-daemon -PBuildConfiguration=Release buildPlugin check testDotNet
+      - name: Upload Gradle test reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}-gradle-test-reports
+          path: MvvmPlugin/MvvmPlugin/build/reports/tests
+      - name: Upload .NET test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}-dotnet-test-results
+          path: MvvmPlugin/MvvmPlugin/TestResults
+      - name: Upload Plugin Verifier reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}-plugin-verifier-reports
+          path: MvvmPlugin/MvvmPlugin/build/reports/pluginVerifier
+
+  validate-wrapper:
+    name: Validate Gradle wrapper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: gradle/actions/wrapper-validation@v6
