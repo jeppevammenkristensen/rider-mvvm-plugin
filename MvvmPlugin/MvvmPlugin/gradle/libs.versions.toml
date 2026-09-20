@@ -1,12 +1,15 @@
 [versions]
 kotlin = "2.1.20" # https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
 rdGen = "2025.3.1"
-riderSdk = "2026.1-SNAPSHOT"
-riderSdkPreview = "2026.1-SNAPSHOT"
+# Latest stable Rider SDK; keep this aligned with ProductVersion and SdkVersion.
+riderSdk = "2026.2.2"
+# Preview coverage detects compatibility regressions before the next Rider release.
+riderSdkPreview = "2026.3-EAP3-SNAPSHOT"
 
 [libraries]
 kotlinStdLib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 rdGen = { group = "com.jetbrains.rd", name = "rd-gen", version.ref = "rdGen" }
+intellijPluginVerifierCli = "org.jetbrains.intellij.plugins:verifier-cli:1.410"
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
