@@ -4,6 +4,7 @@
 [Oo]bj/
 build
 output
+src/dotnet/nuget.config
 .gradle
 .tmp
 *.lock

@@ -51,42 +51,29 @@ public static class PropertyExtensions
 
     public static void RemoveField(this IPropertyDeclaration property)
     {
-        IPropertyBodyHelper? propertyBodyService =
-            LanguageManager.Instance.TryGetService<IPropertyBodyHelper>(property.DeclaredElement!
-                .PresentationLanguage);
+        if (property.GetBackingField() is {} field && field.GetSingleDeclaration()?.Parent is { } fieldDeclaration)
+        {
+            ModificationUtil.DeleteChild(fieldDeclaration);
+        }
+    }
 
-        if (propertyBodyService?.GetBackingField(property.DeclaredElement!) is {} field)
-        {
-            if (field.GetSingleDeclaration()?.Parent is { } fieldDeclaration)
-            {
-                ModificationUtil.DeleteChild(fieldDeclaration);
-            }
-        }
-        else
-        {
-            var accessor = property.GetAccessorDeclaration(AccessorKind.SETTER);
-            if (accessor is null)
-            {
-                return;
-            }
-            var fieldSearcher = new FieldSearcher();
-            accessor.ProcessDescendants(fieldSearcher);
-            if (fieldSearcher.FieldDeclaration is { } fieldDeclaration)
-            {
-                ModificationUtil.DeleteChild(fieldDeclaration);
-            }
-            
-        }
+    /// <summary>
+    /// Finds the field assigned by a property setter.
+    /// </summary>
+    /// <remarks>
+    /// The former language service used for this lookup was removed from the Rider SDK.
+    /// A backing field is identified by the assignment destination in an accessor instead.
+    /// </remarks>
+    public static IField? GetBackingField(this IPropertyDeclaration property)
+    {
+        var fieldSearcher = new FieldSearcher();
+        property.ProcessDescendants(fieldSearcher);
+        return fieldSearcher.FieldDeclaration?.DeclaredElement;
     }
 
     private class FieldSearcher : IRecursiveElementProcessor
     {
-        public IMultipleFieldDeclaration? FieldDeclaration { get; private set; }
-        
-        public FieldSearcher()
-        {
-            
-        }
+        public IFieldDeclaration? FieldDeclaration { get; private set; }
 
         public bool InteriorShouldBeProcessed(ITreeNode element)
         {
@@ -105,11 +92,8 @@ public static class PropertyExtensions
         {
             if (assignment.Dest is IReferenceExpression referenceExpression && referenceExpression.TryGetReferencedNode<IFieldDeclaration>() is { } fieldDeclaration)
             {
-                if (fieldDeclaration.Parent is IMultipleFieldDeclaration field)
-                {
-                    FieldDeclaration = field;
-                    ProcessingIsFinished = true;
-                }
+                FieldDeclaration = fieldDeclaration;
+                ProcessingIsFinished = true;
             }
         }
 

@@ -39,17 +39,10 @@ public class ConvertToRelayProperty : ModernScopedContextActionBase<IPropertyDec
 
         if (property.GetContainingTypeDeclaration() is IClassLikeDeclaration parent)
         {
-            IPropertyBodyHelper? propertyBodyService =
-                LanguageManager.Instance.TryGetService<IPropertyBodyHelper>(property.DeclaredElement!
-                    .PresentationLanguage);
-
-            if (propertyBodyService == null)
-                return null;
-
             ConvertToRelayContext context = new();
 
             // Check to see if the property has a backing field
-            if (propertyBodyService.GetBackingField(property.DeclaredElement!) is { } field)
+            if (property.GetBackingField() is { } field)
             {
                 if (field.GetSingleDeclaration()?.Parent is { } fieldDeclaration)
                 {
