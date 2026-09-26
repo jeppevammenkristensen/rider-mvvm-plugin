@@ -1,11 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Application.Settings.Calculated.Extensions;
-using JetBrains.Application.UI.Options.OptionsDialog.SimpleOptions.ViewModel;
-using JetBrains.Util;
-using JetBrains.Util.Extension;
 
 namespace ReSharperPlugin.MvvmPlugin.Options;
 

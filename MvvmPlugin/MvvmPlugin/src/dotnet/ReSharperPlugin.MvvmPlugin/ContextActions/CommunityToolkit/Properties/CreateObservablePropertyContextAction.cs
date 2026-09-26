@@ -29,7 +29,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Description =
         "Create a property in the given class declaration and decorate it with the ObservableProperty attribute.",
     GroupType = typeof(CSharpContextActions))]
-public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvider provider) : MvvmContextActionBase
 {
     /// <summary>
     /// <see cref="ExecutePsiTransaction"/>
@@ -37,7 +37,7 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
     /// <param name="solution"></param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         if (provider.GetSelectedTreeNode<IClassLikeDeclaration>() is not { } classLikeDeclaration)
             return null;
@@ -152,7 +152,7 @@ public class CreateObservablePropertyContextAction(ICSharpContextActionDataProvi
 
     public override string Text => "Create observable property (CommunityToolkit)";
 
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
 
     {
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is { } fieldDeclaration)

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using JetBrains.ReSharper.Feature.Services.CSharp.PostfixTemplates.Templates;
 using JetBrains.ReSharper.Feature.Services.PostfixTemplates;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp;

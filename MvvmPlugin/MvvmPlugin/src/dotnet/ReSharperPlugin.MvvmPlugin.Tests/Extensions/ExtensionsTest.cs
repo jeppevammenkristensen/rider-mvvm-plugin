@@ -1,7 +1,5 @@
 using JetBrains.Annotations;
 using NUnit.Framework;
-using ReSharperPlugin.MvvmPlugin.Extensions;
-using Xunit;
 using Assert = NUnit.Framework.Assert;
 
 namespace ReSharperPlugin.MvvmPlugin.Tests.Extensions;

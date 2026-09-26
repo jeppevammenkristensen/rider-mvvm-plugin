@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros;
 
 public static class MacroExtensions

@@ -1,38 +1,21 @@
 using System;
 using System.Linq;
-using System.Text;
 using JetBrains.Application.Progress;
-using JetBrains.DocumentModel;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
-using JetBrains.ReSharper.Feature.Services.LiveTemplates.Hotspots;
-using JetBrains.ReSharper.Feature.Services.LiveTemplates.LiveTemplates;
-using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros;
-using JetBrains.ReSharper.Feature.Services.LiveTemplates.Macros.Implementations;
-using JetBrains.ReSharper.Feature.Services.LiveTemplates.Templates;
-using JetBrains.ReSharper.Feature.Services.Navigation.ReferencedCode;
 using JetBrains.ReSharper.Feature.Services.Navigation.Requests;
 using JetBrains.ReSharper.Feature.Services.Occurrences;
-using JetBrains.ReSharper.Intentions.JavaScript.QuickFixes.TypeScript.ChangeAll;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.DeclaredElements;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Resolve;
 using JetBrains.ReSharper.Psi.Search;
-using JetBrains.ReSharper.Psi.Tree;
-using JetBrains.ReSharper.Psi.Util;
-using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
-using JetBrains.Threading;
 using JetBrains.Util;
-using JetBrains.Util.Logging;
 using ReSharperPlugin.MvvmPlugin.Extensions;
 using ReSharperPlugin.MvvmPlugin.Models;
 using IClassLikeDeclaration = JetBrains.ReSharper.Psi.CSharp.Tree.IClassLikeDeclaration;
 using IMethodDeclaration = JetBrains.ReSharper.Psi.CSharp.Tree.IMethodDeclaration;
-using IPropertyDeclaration = JetBrains.ReSharper.Psi.VB.Tree.IPropertyDeclaration;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
 
@@ -41,7 +24,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Description =
         "Makes the given type a relay",
     GroupType = typeof(CSharpContextActions))]
-public class CreateRelayContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class CreateRelayContextAction(ICSharpContextActionDataProvider provider) : MvvmContextActionBase
 {
     /// <summary>
     /// <see cref="ExecutePsiTransaction"/>
@@ -49,7 +32,7 @@ public class CreateRelayContextAction(ICSharpContextActionDataProvider provider)
     /// <param name="solution"></param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         var (valid, methodDeclaration, classLikeDeclaration, _) = TryGetItem();
 
@@ -141,7 +124,7 @@ public class CreateRelayContextAction(ICSharpContextActionDataProvider provider)
 
     public override string Text => "Create Relay (CommunityToolkit)";
 
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         var (valid, methodDeclaration, classLikeDeclaration, relayAttribute) = TryGetItem();
 
@@ -168,19 +151,11 @@ public class CreateRelayContextAction(ICSharpContextActionDataProvider provider)
                 var psiServices = methodDeclaration.GetPsiServices();
                 var consumer = new SearchResultsConsumer();
 
-                try
-                {
-                    psiServices.SingleThreadedFinder.FindReferences(
-                        methodDeclaration.DeclaredElement,
-                        domain: SearchDomainFactory.Instance.CreateSearchDomain(methodDeclaration.GetSourceFile()),
-                        consumer: consumer,
-                        NullProgressIndicator.Create());
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogException("Failed to find references",ex);
-                    return false;
-                }
+                psiServices.SingleThreadedFinder.FindReferences(
+                    methodDeclaration.DeclaredElement,
+                    domain: SearchDomainFactory.Instance.CreateSearchDomain(methodDeclaration.GetSourceFile()),
+                    consumer: consumer,
+                    NullProgressIndicator.Create());
 
                 foreach (var occurrence in consumer.GetOccurrences()
                              .OfType<ReferenceOccurrence>())

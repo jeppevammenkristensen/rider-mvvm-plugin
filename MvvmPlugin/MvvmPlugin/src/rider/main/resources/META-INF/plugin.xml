@@ -7,6 +7,7 @@
   <depends>com.intellij.modules.rider</depends>
 
    <extensions defaultExtensionNs="com.intellij">
+     <errorHandler implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
      <defaultLiveTemplates file="/liveTemplates/Mvvm.xml"/>
        
        <!-- https://plugins.jetbrains.com/docs/intellij/settings-guide.html#values-for-parent-id-attribute -->

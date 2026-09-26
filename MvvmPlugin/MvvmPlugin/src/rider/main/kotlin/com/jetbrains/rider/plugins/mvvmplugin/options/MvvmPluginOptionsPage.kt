@@ -1,11 +1,12 @@
 package com.jetbrains.rider.plugins.mvvmplugin.options
 
 import com.jetbrains.rider.plugins.mvvmplugin.OptionPagesBundle
-import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.ui.dsl.builder.panel
+import com.jetbrains.rider.settings.simple.SimpleOptionsPage
 
-class MvvmPluginOptionsPage : BoundConfigurable(
-    OptionPagesBundle.message("configurable.name.optionpages.options.title")
+class MvvmPluginOptionsPage : SimpleOptionsPage(
+    name = OptionPagesBundle.message("configurable.name.optionpages.options.title"),
+    // Must match the OptionsPage PID in the .NET MvvmPluginOptionsPage.
+    pageId = "MvvmPluginOptionsPage"
 ) {
-    override fun createPanel() = panel {}
+    override fun getId(): String = "MvvmPluginOptionsPage"
 }

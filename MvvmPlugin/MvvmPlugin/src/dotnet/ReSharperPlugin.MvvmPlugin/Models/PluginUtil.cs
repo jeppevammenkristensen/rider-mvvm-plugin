@@ -1,7 +1,4 @@
-using JetBrains.Metadata.Reader.API;
-using JetBrains.Metadata.Reader.Impl;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.Util;
 
 namespace ReSharperPlugin.MvvmPlugin.Models;
