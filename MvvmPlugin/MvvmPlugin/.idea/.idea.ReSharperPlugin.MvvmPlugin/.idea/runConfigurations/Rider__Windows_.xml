@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Rider (Windows)" type="RunNativeExe" factoryName="Native Executable">
     <option name="EXE_PATH" value="C:\Windows\System32\cmd.exe" />
-    <option name="PROGRAM_PARAMETERS" value="/c gradlew.bat :runIde -x compileKotlin -x compileDotNet" />
+    <option name="PROGRAM_PARAMETERS" value="/c gradlew.bat --no-daemon :runIde" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <envs>
@@ -9,9 +9,6 @@
       <env name="RUNNING_FROM_RIDER" value="1" />
     </envs>
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
-    <method v="2">
-      <option name="Build" default="false" projectName="ReSharperPlugin.MvvmPlugin.Rider" projectPath="file://$PROJECT_DIR$/src/dotnet/ReSharperPlugin.MvvmPlugin/ReSharperPlugin.MvvmPlugin.Rider.csproj" />
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Rider – Frontend (Windows)" run_configuration_type="RunNativeExe" />
-    </method>
+    <method v="2" />
   </configuration>
 </component>

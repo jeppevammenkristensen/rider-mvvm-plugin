@@ -299,7 +299,6 @@ public static class ContextActionUtil
 
     public static bool HasCallerMemberName(this IParameter parameter)
     {
-        int i = 0;
         return false;
     }
     
@@ -567,6 +566,9 @@ public static class ContextActionUtil
             {
                 foreach (var declaration in csharpFile.Descendants<IClassLikeDeclaration>())
                 {
+                    if (declaration == null || declaration.NameIdentifier == null)
+                        continue;
+                    
                     if (otherValues.IsMatch(declaration.NameIdentifier.Name))
                     {
                         if (declaration.DeclaredElement is { } declaredElement)

@@ -5,6 +5,7 @@ import org.jetbrains.intellij.platform.gradle.Constants
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
@@ -53,7 +54,7 @@ repositories {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.13"
+    gradleVersion = "8.14.4"
     distributionType = Wrapper.DistributionType.ALL
     distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
@@ -73,7 +74,7 @@ sourceSets {
 }
 
 tasks.compileKotlin {
-    kotlinOptions { jvmTarget = "17" }
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
 }
 
 val setBuildTool by tasks.registering {
@@ -235,6 +236,19 @@ intellijPlatform {
 tasks.runIde {
     // Match Rider's default heap size of 1.5Gb (default for runIde is 512Mb)
     maxHeapSize = "1500m"
+
+    if (isWindows) {
+        doFirst {
+            // Gradle shortens long Windows classpaths into a manifest-only JAR,
+            // which Rider's PathClassLoader cannot use. Let Java expand an argfile instead.
+            val classpathArgs = temporaryDir.resolve("rider-classpath.args")
+            classpathArgs.parentFile.mkdirs()
+            val escapedClasspath = classpath.asPath.replace('\\', '/').replace("\"", "\\\"")
+            classpathArgs.writeText("-classpath\n\"$escapedClasspath\"\n")
+            classpath = files()
+            jvmArgs("@${classpathArgs.absolutePath}")
+        }
+    }
 }
 
 tasks.patchPluginXml {
