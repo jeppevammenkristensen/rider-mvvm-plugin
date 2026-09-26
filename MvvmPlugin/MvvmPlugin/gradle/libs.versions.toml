@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.20" # https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
+kotlin = "2.4.0" # https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
 rdGen = "2025.3.1"
 # Latest stable Rider SDK; keep this aligned with ProductVersion and SdkVersion.
 riderSdk = "2026.2.2"

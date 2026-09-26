@@ -226,7 +226,7 @@ public abstract class ObservableIntroduceMemberTemplateBase : CSharpPostfixTempl
             IExpressionStatement statement,
             Suffix suffix)
         {
-            IClassMemberDeclaration memberNode = myMemberPointer?.GetTreeNode();
+            IClassMemberDeclaration? memberNode = myMemberPointer?.GetTreeNode();
             if (memberNode == null)
                 return;
 
