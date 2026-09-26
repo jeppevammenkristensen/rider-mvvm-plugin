@@ -3,27 +3,23 @@ using System.Linq;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
-using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Navigation.NavigationExtensions;
 using JetBrains.ReSharper.Feature.Services.Xaml.Bulbs;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Files;
-using JetBrains.ReSharper.Psi.Impl.CodeStyle;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Psi.Xaml.Tree;
 using JetBrains.TextControl;
 using JetBrains.Util;
-using ReSharperPlugin.MvvmPlugin.Extensions;
 
 namespace ReSharperPlugin.MvvmPlugin.ContextActions.Navigation;
 
 [ContextAction(Name = nameof(NavigateToViewModelFromXamlView), Description = "Navigate to the ViewModel")]
-public class NavigateToViewModelFromXamlView(XamlContextActionDataProvider provider) : ContextActionBase
+public class NavigateToViewModelFromXamlView(XamlContextActionDataProvider provider) : MvvmContextActionBase
 
 {
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         if (ViewModelType is { } viewModelType)
         {
@@ -48,7 +44,7 @@ public class NavigateToViewModelFromXamlView(XamlContextActionDataProvider provi
     }
 
     public override string Text => "Navigate to ViewModel";
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         if (provider.GetSelectedTreeNode<IXamlFile>() is not { } xamlFile)
             return false;

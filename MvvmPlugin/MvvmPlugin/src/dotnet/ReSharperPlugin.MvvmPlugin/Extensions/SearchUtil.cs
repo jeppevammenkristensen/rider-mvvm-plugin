@@ -8,7 +8,6 @@ using JetBrains.ReSharper.Feature.Services.Occurrences;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Search;
 using JetBrains.ReSharper.Psi.Tree;
-using JetBrains.Util.Logging;
 
 namespace ReSharperPlugin.MvvmPlugin.Extensions;
 
@@ -19,15 +18,9 @@ public static  class SearchUtil
     {   
         var consumer = new SearchResultsConsumer();
         
-        try
-        {
-            provider.PsiServices.SingleThreadedFinder.FindReferences(declaredElementRetriever(treeNode), domain: SearchDomainFactory.Instance.CreateSearchDomain(treeNode.GetSourceFile()), consumer: consumer, NullProgressIndicator.Create());
-        }
-        catch (Exception e)
-        {
-            Logger.LogException("Failed to find usages in file", e);
-            yield break;
-        }
+        // A failed search is not an empty result: callers may be changing source code.
+        // Let the context-action/SDK boundary report the failure and roll back the transaction.
+        provider.PsiServices.SingleThreadedFinder.FindReferences(declaredElementRetriever(treeNode), domain: SearchDomainFactory.Instance.CreateSearchDomain(treeNode.GetSourceFile()), consumer: consumer, NullProgressIndicator.Create());
         
         foreach (var occurrence in consumer.GetOccurrences().OfType<ReferenceOccurrence>())
         {
@@ -40,15 +33,7 @@ public static  class SearchUtil
     {   
         var consumer = new SearchResultsConsumer();
         
-        try
-        {
-            provider.PsiServices.SingleThreadedFinder.FindReferences(declaredElements, domain: SearchDomainFactory.Instance.CreateSearchDomain(treeNode.GetSourceFile()), consumer: consumer, NullProgressIndicator.Create());
-        }
-        catch (Exception e)
-        {
-            Logger.LogException("Failed to find usages in file", e);
-            yield break;
-        }
+        provider.PsiServices.SingleThreadedFinder.FindReferences(declaredElements, domain: SearchDomainFactory.Instance.CreateSearchDomain(treeNode.GetSourceFile()), consumer: consumer, NullProgressIndicator.Create());
         
         foreach (var occurrence in consumer.GetOccurrences().OfType<ReferenceOccurrence>())
         {

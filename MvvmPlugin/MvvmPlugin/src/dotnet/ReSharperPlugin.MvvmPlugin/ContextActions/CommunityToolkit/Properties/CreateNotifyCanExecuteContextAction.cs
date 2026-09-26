@@ -9,7 +9,6 @@ using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Intentions;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Impl.CodeStyle;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.MvvmPlugin.Extensions;

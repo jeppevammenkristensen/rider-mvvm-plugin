@@ -1,7 +1,5 @@
-using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.FeaturesTestFramework.Intentions;
 using JetBrains.ReSharper.Psi.CSharp;
-using JetBrains.ReSharper.Psi.CSharp.Impl;
 using JetBrains.ReSharper.TestFramework;
 using NUnit.Framework;
 using ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;

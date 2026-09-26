@@ -22,9 +22,9 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Description =
         "If the nuget version is 8.4 or higher of the CommunityToolkit.Mvvm package. This will ensure that that language version is preview. NOTE. This will not change the language version of the project, as it is required that it is at least dotnet 9.0",
     GroupType = typeof(CSharpContextActions))]
-public class EnablePartialPropertiesContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class EnablePartialPropertiesContextAction(ICSharpContextActionDataProvider provider) : MvvmContextActionBase
 {
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         var project = provider.SourceFile.GetProject();
 
@@ -54,7 +54,7 @@ public class EnablePartialPropertiesContextAction(ICSharpContextActionDataProvid
     }
 
     public override string Text => "Enable partial properties (CommunityToolkit)";
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         if (provider.Project?.ProjectProperties.TryGetConfiguration<CSharpProjectConfiguration>(
               provider.Project.GetCurrentTargetFrameworkId()) is { } configuration && provider.GetSelectedTreeNode<ITreeNode>() is {} treeNode && PluginUtil.GetObservableObject(treeNode) is {} observable)

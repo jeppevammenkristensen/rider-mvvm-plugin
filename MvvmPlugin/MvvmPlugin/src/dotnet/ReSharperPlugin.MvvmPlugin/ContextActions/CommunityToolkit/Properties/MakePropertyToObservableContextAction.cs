@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
-using JetBrains.ProjectModel.Properties.CSharp;
-using JetBrains.ProjectModel.Propoerties;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Generate;
@@ -29,17 +27,14 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Description =
         "Converts the property to a field and decorates it with the ObservableProperty if partial properties are not supported. Otherwise it will make the property partial and decoreate with the ObservableProperty attribute",
     GroupType = typeof(CSharpContextActions))]
-public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
-{
-    private string _property;
-
-    /// <summary>
+public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvider provider) : MvvmContextActionBase
+{ /// <summary>
     /// <see cref="ExecutePsiTransaction"/>
     /// </summary>
     /// <param name="solution"></param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return null;
@@ -263,7 +258,7 @@ public class MakePropertyToObservableContextAction(ICSharpContextActionDataProvi
 
     public override string Text => "Make property observable (CommunityToolkit)";
 
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         if (provider.GetSelectedTreeNode<IPropertyDeclaration>() is not { } propertyDeclaration)
             return false;

@@ -162,6 +162,8 @@ tasks.buildPlugin {
 dependencies {
     intellijPlatform {
         rider(ProductVersion, useInstaller=false)
+        // Hosts the backend-defined settings UI (SimpleOptionsPage).
+        bundledModule("intellij.rider.rdclient.dotnet")
         jetbrainsRuntime()
         instrumentationTools()
         pluginVerifier(libs.intellijPluginVerifierCli.map { it.version!! })

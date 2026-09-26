@@ -4,7 +4,6 @@ using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.TextControl;
@@ -18,9 +17,9 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit.Properties;
     Name = "Make field observable (CommunityToolkit)",
     Description = "Decorates the selected field with the ObservablePropertyAttribute. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
-public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider provider) : ContextActionBase
+public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider provider) : MvvmContextActionBase
 {
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         if (provider.GetSelectedTreeNode<IFieldDeclaration>() is not { } fieldDeclaration)
             return null;
@@ -38,7 +37,7 @@ public class MakeFieldObservableContextAction(ICSharpContextActionDataProvider p
     }
 
     public override string Text => "Make Field Observable (CommunityToolkit)";
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         FieldDeclaration = null;
         

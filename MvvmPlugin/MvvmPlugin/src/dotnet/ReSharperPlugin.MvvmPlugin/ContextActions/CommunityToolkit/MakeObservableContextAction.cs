@@ -19,7 +19,7 @@ namespace ReSharperPlugin.MvvmPlugin.ContextActions.CommunityToolkit;
     Name = "Make Class Observable (CommunityToolkit)",
     Description = "Lets the class inherit from ObservableObject. If required the containing class will be made partial.",
     GroupType = typeof(CSharpContextActions))]
-public class MakeObservableContextAction : ContextActionBase
+public class MakeObservableContextAction : MvvmContextActionBase
 {
     private readonly ICSharpContextActionDataProvider myProvider;
 
@@ -28,7 +28,7 @@ public class MakeObservableContextAction : ContextActionBase
         myProvider = provider;
     }
     
-    protected override Action<ITextControl>? ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
+    protected override Action<ITextControl>? ExecutePsiTransactionCore(ISolution solution, IProgressIndicator progress)
     {
         if (myProvider.GetSelectedTreeNode<IClassDeclaration>() is not { } classLikeDeclaration)
             return null;
@@ -56,7 +56,7 @@ public class MakeObservableContextAction : ContextActionBase
     }
 
     public override string Text => "Make Class ObservableObject (CommunityToolkit)";
-    public override bool IsAvailable(IUserDataHolder cache)
+    protected override bool IsAvailableCore(IUserDataHolder cache)
     {
         FieldDeclaration = null;
         
