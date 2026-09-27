@@ -1,6 +1,7 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import groovy.ant.FileNameFinder
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
 import org.jetbrains.intellij.platform.gradle.Constants
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
+import javax.inject.Inject
 
 // To access libs values go to the libs.versions.toml file
 
@@ -18,6 +20,13 @@ plugins {
     alias(libs.plugins.gradleJvmWrapper)
     alias(libs.plugins.intelliJPlatform)    
 }
+
+abstract class BuildExecServices {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+}
+
+val execOperations = objects.newInstance<BuildExecServices>().execOperations
 
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
 extra["isWindows"] = isWindows
@@ -84,7 +93,7 @@ val setBuildTool by tasks.registering {
 
         if (isWindows) {
             val stdout = ByteArrayOutputStream()
-            exec {
+            execOperations.exec {
                 executable("${rootDir}\\tools\\vswhere.exe")
                 args("-latest", "-property", "installationPath", "-products", "*")
                 standardOutput = stdout
@@ -113,7 +122,7 @@ val compileDotNet by tasks.registering {
         val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
         arguments.add("/p:RestoreConfigFile=${dotNetSourceDirectory}/nuget.config")
         arguments.add("/t:Restore;Rebuild")
-        exec {
+        execOperations.exec {
             executable(executable)
             args(arguments)
             workingDir(rootDir)
@@ -123,7 +132,7 @@ val compileDotNet by tasks.registering {
 
 val testDotNet by tasks.registering {
     doLast {
-        exec {
+        execOperations.exec {
             executable("dotnet")
             args("test", "${DotnetSolution}", "/p:RestoreConfigFile=${dotNetSourceDirectory}/nuget.config", "--logger", "GitHubActions")
             workingDir(rootDir)
@@ -151,7 +160,7 @@ tasks.buildPlugin {
         arguments.add("/p:PackageOutputPath=${rootDir}/output")
         arguments.add("/p:PackageReleaseNotes=${changeNotes}")
         arguments.add("/p:PackageVersion=${version}")
-        exec {
+        execOperations.exec {
             executable(executable)
             args(arguments)
             workingDir(rootDir)
@@ -293,7 +302,7 @@ tasks.publishPlugin {
     token.set("${PublishToken}")
 
     doLast {
-        exec {
+        execOperations.exec {
             executable("dotnet")
             args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key","${PublishToken}","--source","https://plugins.jetbrains.com")
             workingDir(rootDir)

@@ -5,11 +5,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
-class OptionPagesBundle : DynamicBundle(BUNDLE) {
+class OptionPagesBundle {
     companion object {
         @NonNls
         private const val BUNDLE = "messages.OptionPagesBundle"
-        private val INSTANCE: OptionPagesBundle = OptionPagesBundle()
+        private val INSTANCE = DynamicBundle(OptionPagesBundle::class.java, BUNDLE)
 
         @Nls
         fun message(

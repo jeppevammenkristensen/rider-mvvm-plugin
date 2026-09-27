@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 1.3.0.262
+- Update compatibility for Rider and ReSharper 2026.2.
+- Fix observable property creation.
+- Fix the Rider settings page.
+- Improve error reporting for context actions.
+
 ## 1.2.0
 - Necesarry upgrade to better support Resharper. Adjustments to Community Toolkit property generation. Fixed faulty analysis check for dotnet 9 or larger
 
