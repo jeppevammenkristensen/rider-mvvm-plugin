@@ -16,6 +16,7 @@ ProjectSection(SolutionItems) = preProject
 	gradle\libs.versions.toml = gradle\libs.versions.toml
 	build.gradle.kts = build.gradle.kts
 	gradle.properties = gradle.properties
+	gradlew.ps1 = gradlew.ps1
 EndProjectSection
 EndProject
 Global

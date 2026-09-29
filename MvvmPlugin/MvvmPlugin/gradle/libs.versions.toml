@@ -4,7 +4,7 @@ rdGen = "2025.3.1"
 # Latest stable Rider SDK; keep this aligned with ProductVersion and SdkVersion.
 riderSdk = "2026.2.2"
 # Preview coverage detects compatibility regressions before the next Rider release.
-riderSdkPreview = "2026.3-EAP3-SNAPSHOT"
+riderSdkPreview = "2026.3-EAP4-SNAPSHOT"
 
 [libraries]
 kotlinStdLib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }

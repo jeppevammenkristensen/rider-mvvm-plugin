@@ -85,7 +85,7 @@ public class MvvmPluginOptionsPage : BeSimpleOptionsPage
         //     dialogs);
     }
 
-    private BeTextBox AddTextBox<TKeyClass>(Expression<Func<TKeyClass, string>> lambdaExpression, string description)
+    private new BeTextBox AddTextBox<TKeyClass>(Expression<Func<TKeyClass, string>> lambdaExpression, string description)
     {
         var property = new Property<string>(description);
         OptionsSettingsSmartContext.SetBinding(_lifetime, lambdaExpression, property);
