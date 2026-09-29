@@ -1,12 +1,14 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import groovy.ant.FileNameFinder
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
 import org.jetbrains.intellij.platform.gradle.Constants
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
+import javax.inject.Inject
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
 
@@ -18,6 +20,15 @@ plugins {
     alias(libs.plugins.gradleJvmWrapper)
     alias(libs.plugins.intelliJPlatform)    
 }
+
+interface BuildServices {
+    @get:Inject
+    val execOperations: ExecOperations
+}
+
+val execOperations = objects.newInstance<BuildServices>().execOperations
+val buildToolExecutable = objects.property<String>()
+val buildToolArguments = objects.listProperty<String>()
 
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
 extra["isWindows"] = isWindows
@@ -54,7 +65,7 @@ repositories {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.14.4"
+    gradleVersion = "8.14.5"
     distributionType = Wrapper.DistributionType.ALL
     distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
@@ -79,12 +90,12 @@ tasks.compileKotlin {
 
 val setBuildTool by tasks.registering {
     doLast {
-        extra["executable"] = "dotnet"
+        buildToolExecutable.set("dotnet")
         var args = mutableListOf("msbuild")
 
         if (isWindows) {
             val stdout = ByteArrayOutputStream()
-            exec {
+            execOperations.exec {
                 executable("${rootDir}\\tools\\vswhere.exe")
                 args("-latest", "-property", "installationPath", "-products", "*")
                 standardOutput = stdout
@@ -94,7 +105,7 @@ val setBuildTool by tasks.registering {
             val directory = stdout.toString().trim()
             if (directory.isNotEmpty()) {
                 val files = FileNameFinder().getFileNames("${directory}\\MSBuild", "**/MSBuild.exe")
-                extra["executable"] = files.get(0)
+                buildToolExecutable.set(files.get(0))
                 args = mutableListOf("/v:minimal")
             }
         }
@@ -102,18 +113,18 @@ val setBuildTool by tasks.registering {
         args.add("${DotnetSolution}")
         args.add("/p:Configuration=${BuildConfiguration}")
         args.add("/p:HostFullIdentifier=")
-        extra["args"] = args
+        buildToolArguments.set(args)
     }
 }
 
 val compileDotNet by tasks.registering {
     dependsOn(setBuildTool)
     doLast {
-        val executable: String by setBuildTool.get().extra
-        val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
+        val executable = buildToolExecutable.get()
+        val arguments = buildToolArguments.get().toMutableList()
         arguments.add("/p:RestoreConfigFile=${dotNetSourceDirectory}/nuget.config")
         arguments.add("/t:Restore;Rebuild")
-        exec {
+        execOperations.exec {
             executable(executable)
             args(arguments)
             workingDir(rootDir)
@@ -123,7 +134,7 @@ val compileDotNet by tasks.registering {
 
 val testDotNet by tasks.registering {
     doLast {
-        exec {
+        execOperations.exec {
             executable("dotnet")
             args("test", "${DotnetSolution}", "/p:RestoreConfigFile=${dotNetSourceDirectory}/nuget.config", "--logger", "GitHubActions")
             workingDir(rootDir)
@@ -134,7 +145,7 @@ val testDotNet by tasks.registering {
 tasks.buildPlugin {
     doLast {
         copy {
-            from("${buildDir}/distributions/${rootProject.name}-${version}.zip")
+            from(layout.buildDirectory.file("distributions/${rootProject.name}-${version}.zip"))
             into("${rootDir}/output")
         }
 
@@ -145,13 +156,13 @@ tasks.buildPlugin {
             it.groups[1]!!.value.replace("(?s)- ".toRegex(), "\u2022 ").replace("`", "").replace(",", "%2C").replace(";", "%3B")
         }.take(1).joinToString()
 
-        val executable: String by setBuildTool.get().extra
-        val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
+        val executable = buildToolExecutable.get()
+        val arguments = buildToolArguments.get().toMutableList()
         arguments.add("/t:Pack")
         arguments.add("/p:PackageOutputPath=${rootDir}/output")
         arguments.add("/p:PackageReleaseNotes=${changeNotes}")
         arguments.add("/p:PackageVersion=${version}")
-        exec {
+        execOperations.exec {
             executable(executable)
             args(arguments)
             workingDir(rootDir)
@@ -161,11 +172,12 @@ tasks.buildPlugin {
 
 dependencies {
     intellijPlatform {
-        rider(ProductVersion, useInstaller=false)
+        rider(ProductVersion) {
+            useInstaller = false
+        }
         // Hosts the backend-defined settings UI (SimpleOptionsPage).
         bundledModule("intellij.rider.rdclient.dotnet")
         jetbrainsRuntime()
-        instrumentationTools()
         pluginVerifier(libs.intellijPluginVerifierCli.map { it.version!! })
         testFramework(TestFrameworkType.Bundled)
 
@@ -293,7 +305,7 @@ tasks.publishPlugin {
     token.set("${PublishToken}")
 
     doLast {
-        exec {
+        execOperations.exec {
             executable("dotnet")
             args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key","${PublishToken}","--source","https://plugins.jetbrains.com")
             workingDir(rootDir)

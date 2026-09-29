@@ -26,14 +26,16 @@ public class ToObservablePropertyPostFixTemplate : ObservableIntroduceMemberTemp
         [NotNull] IntroduceMemberPostfixTemplateInfo info) : 
         IntroduceMemberBehaviorBase(info)
     {
+        private readonly IntroduceMemberPostfixTemplateInfo _info = info;
+
         protected override IClassMemberDeclaration CreateMemberDeclaration(
             CSharpElementFactory factory, IPsiModule module)
         {
             
             // We generate the property. The underlying class will ensure that it is given a good name
-            if (info.UsePartial)
+            if (_info.UsePartial)
             {
-              var propertyDeclaration = factory.CreateObservableProperty(null, info.ExpressionType);
+              var propertyDeclaration = factory.CreateObservableProperty(null, _info.ExpressionType);
               return propertyDeclaration;  
             }
             else

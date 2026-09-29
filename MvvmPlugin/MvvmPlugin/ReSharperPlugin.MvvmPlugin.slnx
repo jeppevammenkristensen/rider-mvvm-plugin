@@ -1,14 +1,16 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/misc/">
-    <File Path="src\dotnet\Plugin.props" />
-    <File Path="README.md" />
-    <File Path="CHANGELOG.md" />
-    <File Path="src\rider\main\resources\META-INF\plugin.xml" />
-    <File Path="src\rider\main\resources\liveTemplates\Mvvm.xml" />
     <File Path="build.gradle.kts" />
+    <File Path="CHANGELOG.md" />
     <File Path="gradle.properties" />
+    <File Path="gradle/libs.versions.toml" />
+    <File Path="gradlew.ps1" />
+    <File Path="README.md" />
+    <File Path="src/dotnet/Plugin.props" />
+    <File Path="src/rider/main/resources/liveTemplate/Mvvm.xml" />
+    <File Path="src/rider/main/resources/META-INF/plugin.xml" />
   </Folder>
-  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin.Tests\ReSharperPlugin.MvvmPlugin.Tests.csproj" Type="Classic C#" />
-  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.csproj" Type="Classic C#" />
-  <Project Path="src\dotnet\ReSharperPlugin.MvvmPlugin\ReSharperPlugin.MvvmPlugin.Rider.csproj" Type="Classic C#" />
+  <Project Path="src/dotnet/ReSharperPlugin.MvvmPlugin.Tests/ReSharperPlugin.MvvmPlugin.Tests.csproj" />
+  <Project Path="src/dotnet/ReSharperPlugin.MvvmPlugin/ReSharperPlugin.MvvmPlugin.csproj" />
+  <Project Path="src/dotnet/ReSharperPlugin.MvvmPlugin/ReSharperPlugin.MvvmPlugin.Rider.csproj" />
 </Solution>
